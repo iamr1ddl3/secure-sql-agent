@@ -1,0 +1,34 @@
+[project]
+name = "secure-sql-agent"
+version = "0.1.0"
+description = "Security-first text-to-SQL agent over (synthetic) bank data: database-enforced RLS, guardrails, eval-gated CI."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "pydantic>=2.8",
+  "pydantic-settings>=2.4",
+  "psycopg[binary,pool]>=3.2",
+  "pyjwt[crypto]>=2.9",
+  "httpx>=0.27",
+  "mcp>=2.3,<3",
+  "langgraph>=0.2",
+  "openai>=1.40",          # OpenRouter is OpenAI-compatible
+  "sqlglot>=25",
+  "pyyaml>=6",
+  "langfuse>=2.50",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "jsonschema>=4.23", "faker>=30", "deepeval>=1.0", "ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/secure_sql_agent"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

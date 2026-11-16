@@ -1,0 +1,11 @@
+{
+  "question": "Loans over 90 days overdue in my branch",
+  "identity": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.example-payload.example-signature",
+  "on_behalf_of_chain": [
+    {
+      "agent_id": "supervisor",
+      "agent_version": "0.1.0",
+      "task_id": "task_01HZX"
+    }
+  ]
+}

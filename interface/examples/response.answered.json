@@ -1,0 +1,35 @@
+{
+  "schema_version": "1",
+  "status": "answered",
+  "columns": [
+    {
+      "name": "total_deposits",
+      "type": "numeric",
+      "masked": false
+    }
+  ],
+  "rows": [
+    [
+      48213907.55
+    ]
+  ],
+  "row_count": 1,
+  "truncated": false,
+  "sql": "SELECT sum(t.amount) AS total_deposits FROM bank.transactions t JOIN bank.branches b ON b.branch_id = t.branch_id WHERE b.city = 'Surat' AND t.txn_type = 'deposit' AND t.txn_at >= date_trunc('month', now()) - interval '1 month' AND t.txn_at < date_trunc('month', now()) LIMIT 100",
+  "explanation": "Deposits at the Surat branch in October 2026 totalled INR 4,82,13,907.55.",
+  "confidence": {
+    "router": 0.94,
+    "validator": 1.0
+  },
+  "policy_hits": [
+    {
+      "policy_id": "validator.limit_added",
+      "stage": "validator",
+      "action": "cap",
+      "detail": "LIMIT 100 added"
+    }
+  ],
+  "review_id": null,
+  "error": null,
+  "trace_id": "tr_9f2c1e"
+}

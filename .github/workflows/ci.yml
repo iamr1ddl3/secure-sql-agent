@@ -1,0 +1,56 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contract-and-permissions:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-owner
+          POSTGRES_DB: bank
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      ADMIN_DATABASE_URL: postgresql://postgres:ci-owner@localhost:5432/bank
+      AGENT_DATABASE_URL: postgresql://sql_agent_login:ci-agent@localhost:5432/bank
+      PGPASSWORD: ci-owner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -e ".[dev]"
+
+      - name: Apply migrations (same files as hosted Supabase)
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "== $f"; psql -h localhost -U postgres -d bank -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+          psql -h localhost -U postgres -d bank -c "alter role sql_agent_login password 'ci-agent'"
+
+      - name: Seed synthetic data (deterministic)
+        run: python scripts/seed.py --truncate
+
+      - name: Contract + permission tests
+        run: pytest -q
+
+      - name: Gate - zero permission leaks
+        run: |
+          python - <<'PY'
+          import json, sys
+          r = json.load(open("reports/permission_leaks.json"))
+          print(f"leaked_rows_total={r['leaked_rows_total']} across {len(r['leaks'])} checks")
+          sys.exit(1 if r["leaked_rows_total"] else 0)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: reports, path: reports/ }
+
+  # eval-gate: added in stage 1 once the golden set exists. Fails the PR if execution
+  # accuracy drops > 2 points vs main, or any permission test leaks a row.

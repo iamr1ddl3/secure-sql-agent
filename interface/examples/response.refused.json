@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "status": "refused",
+  "columns": [],
+  "rows": [],
+  "row_count": 0,
+  "truncated": false,
+  "sql": "SELECT e.full_name, s.annual_ctc FROM bank.employees e JOIN bank.salaries s USING (employee_id) WHERE e.job_title = 'Chief Executive Officer' LIMIT 100",
+  "explanation": "Your role (intern) cannot read salary data. The database denied the query.",
+  "confidence": {
+    "router": 0.88,
+    "validator": 1.0
+  },
+  "policy_hits": [
+    {
+      "policy_id": "db.permission_denied",
+      "stage": "database",
+      "action": "block",
+      "detail": "permission denied for schema bank"
+    }
+  ],
+  "review_id": null,
+  "error": null,
+  "trace_id": "tr_41aa07"
+}

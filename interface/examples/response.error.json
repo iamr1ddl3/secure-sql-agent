@@ -1,0 +1,28 @@
+{
+  "schema_version": "1",
+  "status": "error",
+  "columns": [],
+  "rows": [],
+  "row_count": 0,
+  "truncated": false,
+  "sql": null,
+  "explanation": "The identity token could not be verified.",
+  "confidence": {
+    "router": null,
+    "validator": null
+  },
+  "policy_hits": [
+    {
+      "policy_id": "identity.invalid_token",
+      "stage": "identity",
+      "action": "block",
+      "detail": "signature verification failed"
+    }
+  ],
+  "review_id": null,
+  "error": {
+    "code": "invalid_identity",
+    "message": "signature verification failed"
+  },
+  "trace_id": "tr_0c55d2"
+}

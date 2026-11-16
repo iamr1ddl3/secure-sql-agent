@@ -1,0 +1,12 @@
+# The bank database is hosted Supabase (see .env). This runs the agent service only.
+# For fully offline dev, CI's Postgres steps (.github/workflows/ci.yml) work against a local postgres:16.
+services:
+  api:
+    build: .
+    env_file: .env
+    ports: ["8000:8000"]
+  mcp:
+    build: .
+    env_file: .env
+    command: ["python", "-m", "secure_sql_agent.mcp_server", "--http"]
+    ports: ["8001:8000"]

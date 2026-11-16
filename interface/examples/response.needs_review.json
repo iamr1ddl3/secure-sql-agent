@@ -1,0 +1,24 @@
+{
+  "schema_version": "1",
+  "status": "needs_review",
+  "columns": [],
+  "rows": [],
+  "row_count": 0,
+  "truncated": false,
+  "sql": null,
+  "explanation": "Requests for full customer contact lists need manager approval. Ticket created.",
+  "confidence": {
+    "router": 0.71,
+    "validator": null
+  },
+  "policy_hits": [
+    {
+      "policy_id": "router.bulk_pii_export",
+      "stage": "router",
+      "action": "review"
+    }
+  ],
+  "review_id": "rv_0007",
+  "error": null,
+  "trace_id": "tr_77b310"
+}

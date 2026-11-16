@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/aiagentslab/secure-sql-agent/interface/query_bank_data.v1.schema.json",
+  "title": "query_bank_data v1",
+  "description": "Contract for the Secure SQL Agent. Exposed as the MCP tool `query_bank_data` and as FastAPI `POST /v1/query`. Version rule: adding an optional field is a minor change; renaming or removing a field, or adding a required request field, needs v2.",
+  "$defs": {
+    "QueryRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question",
+        "identity"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "The plain-English question."
+        },
+        "identity": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Signed JWT for the human end user (Supabase Auth access token, or a delegated on-behalf-of token whose `sub` is the human). Service-role or service-account tokens are rejected."
+        },
+        "on_behalf_of_chain": {
+          "type": "array",
+          "maxItems": 8,
+          "description": "Optional, informational only: the agents that relayed this request, outermost first. Recorded in the audit trace. NEVER used for authorization; access is decided by `identity` alone.",
+          "items": {
+            "$ref": "#/$defs/DelegationHop"
+          }
+        },
+        "max_rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100,
+          "description": "Upper bound on returned rows. The service applies min(max_rows, its own cap)."
+        }
+      }
+    },
+    "DelegationHop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent_id"
+      ],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "agent_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 64
+        },
+        "task_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 128
+        }
+      }
+    },
+    "QueryResponse": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "schema_version",
+        "status",
+        "columns",
+        "rows",
+        "row_count",
+        "truncated",
+        "sql",
+        "explanation",
+        "confidence",
+        "policy_hits",
+        "trace_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1"
+        },
+        "status": {
+          "enum": [
+            "answered",
+            "refused",
+            "needs_review",
+            "error"
+          ],
+          "description": "answered: rows are returned. refused: a guardrail or the database denied the request. needs_review: parked for human approval. error: something failed; nothing was returned."
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "description": "Empty unless status is answered."
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "array"
+          },
+          "description": "Row values aligned with `columns`, after masking. Empty unless status is answered."
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "True when more rows existed than were returned."
+        },
+        "sql": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The exact SQL that ran, for audit. Null if nothing ran."
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "One line for the end user: what the answer is, or why it was refused or parked."
+        },
+        "confidence": {
+          "$ref": "#/$defs/Confidence"
+        },
+        "policy_hits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PolicyHit"
+          }
+        },
+        "review_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Approval-queue ticket when status is needs_review."
+        },
+        "error": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/Error"
+            }
+          ]
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Link to the full step trace (Langfuse)."
+        }
+      }
+    },
+    "Column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "type",
+        "masked"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "Postgres type name, e.g. numeric, text, date."
+        },
+        "masked": {
+          "type": "boolean",
+          "description": "True if the output guard masked this column."
+        }
+      }
+    },
+    "Confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "router",
+        "validator"
+      ],
+      "properties": {
+        "router": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "validator": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "PolicyHit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "stage",
+        "action"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "description": "Stable id, e.g. input.injection_classifier, validator.select_only, db.permission_denied, output.mask_pii."
+        },
+        "stage": {
+          "enum": [
+            "identity",
+            "input_guard",
+            "router",
+            "validator",
+            "database",
+            "output_guard"
+          ]
+        },
+        "action": {
+          "enum": [
+            "block",
+            "mask",
+            "flag",
+            "review",
+            "cap"
+          ]
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "invalid_identity",
+            "invalid_request",
+            "generation_failed",
+            "db_timeout",
+            "db_error",
+            "internal"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    }
+  }
+}

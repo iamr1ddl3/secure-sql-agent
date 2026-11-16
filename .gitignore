@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+reports/
+.DS_Store
+# raw third-party data never goes in the repo
+data/raw/
+*.zip
+.deepeval/
+# vault / assistant metadata stays private (portfolio template)
+CLAUDE.md
+.claude/
