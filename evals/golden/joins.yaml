@@ -1,0 +1,246 @@
+# Group: joins (2 to 3 tables). 20 items. Branch ids: 1 = Surat, 5 = Mumbai.
+# "Current salary" = the salaries row with the latest effective_from for that employee.
+# reviewed: false until a human has checked question + SQL + result.
+
+- id: jn-01
+  group: joins
+  asked_by: teller.surat
+  question: Which customers at my branch have a dormant account? Give me their IDs and names.
+  expect: answered
+  reference_sql: |
+    select distinct c.customer_id, c.full_name
+      from bank.customers c join bank.accounts a on a.customer_id = c.customer_id
+     where c.branch_id = 1 and a.status = 'dormant'
+  reviewed: false
+
+- id: jn-02
+  group: joins
+  asked_by: teller.mumbai
+  question: What is the total balance held in savings accounts by priority-segment customers at my branch?
+  expect: answered
+  reference_sql: |
+    select sum(a.balance)
+      from bank.accounts a join bank.customers c on c.customer_id = a.customer_id
+     where c.branch_id = 5 and c.segment = 'priority' and a.account_type = 'savings'
+  reviewed: false
+
+- id: jn-03
+  group: joins
+  asked_by: teller.surat
+  question: Who are the top 5 customers at my branch by total balance across all their accounts?
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, sum(a.balance) as total_balance
+      from bank.customers c join bank.accounts a on a.customer_id = c.customer_id
+     where c.branch_id = 1
+     group by c.customer_id, c.full_name
+     order by total_balance desc, c.customer_id
+     limit 5
+  reviewed: false
+
+- id: jn-04
+  group: joins
+  asked_by: teller.mumbai
+  question: How many of our customers have made at least one UPI transaction?
+  expect: answered
+  reference_sql: |
+    select count(distinct c.customer_id)
+      from bank.customers c
+      join bank.accounts a on a.customer_id = c.customer_id
+      join bank.transactions t on t.account_id = a.account_id
+     where c.branch_id = 5 and t.channel = 'upi'
+  reviewed: false
+
+- id: jn-05
+  group: joins
+  asked_by: manager.surat
+  question: Which customers at my branch have an overdue loan? Show the customer name and the outstanding amount.
+  expect: answered
+  reference_sql: |
+    select c.customer_id, c.full_name, l.loan_id, l.outstanding
+      from bank.loans l join bank.customers c on c.customer_id = l.customer_id
+     where l.branch_id = 1 and l.status = 'overdue'
+  reviewed: false
+
+- id: jn-06
+  group: joins
+  asked_by: manager.surat
+  question: What is the total outstanding loan amount by loan type for SME customers at my branch?
+  expect: answered
+  reference_sql: |
+    select l.loan_type, sum(l.outstanding)
+      from bank.loans l join bank.customers c on c.customer_id = l.customer_id
+     where l.branch_id = 1 and c.segment = 'sme'
+     group by l.loan_type
+  reviewed: false
+
+- id: jn-07
+  group: joins
+  asked_by: manager.mumbai
+  question: List the active staff at my branch with their job title and current annual CTC.
+  expect: answered
+  reference_sql: |
+    select e.employee_id, e.full_name, e.job_title, s.annual_ctc
+      from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
+     where e.branch_id = 5 and e.status = 'active'
+       and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: jn-08
+  group: joins
+  asked_by: manager.surat
+  question: What is the average current annual CTC of the active staff at my branch?
+  expect: answered
+  reference_sql: |
+    select avg(s.annual_ctc)
+      from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
+     where e.branch_id = 1 and e.status = 'active'
+       and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: jn-09
+  group: joins
+  asked_by: manager.surat
+  question: For customers at my branch with an NPA loan, give me their name and phone number.
+  expect: answered
+  reference_sql: |
+    select distinct c.customer_id, c.full_name, c.phone
+      from bank.loans l join bank.customers c on c.customer_id = l.customer_id
+     where l.branch_id = 1 and l.status = 'npa'
+  reviewed: false
+
+- id: jn-10
+  group: joins
+  asked_by: hr.officer
+  question: List everyone in the HR department with the name of their branch (say Head Office if they have none).
+  expect: answered
+  reference_sql: |
+    select e.employee_id, e.full_name, coalesce(b.name, 'Head Office')
+      from bank.employees e left join bank.branches b on b.branch_id = e.branch_id
+     where e.department = 'hr'
+  reviewed: false
+
+- id: jn-11
+  group: joins
+  asked_by: hr.officer
+  question: Show the current annual CTC of every active Branch Manager along with their branch name.
+  expect: answered
+  reference_sql: |
+    select e.employee_id, e.full_name, b.name, s.annual_ctc
+      from bank.employees e
+      join bank.branches b on b.branch_id = e.branch_id
+      join bank.salaries s on s.employee_id = e.employee_id
+     where e.job_title = 'Branch Manager' and e.status = 'active'
+       and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: jn-12
+  group: joins
+  asked_by: hr.officer
+  question: What is the average current annual CTC per department for active employees?
+  expect: answered
+  reference_sql: |
+    select e.department, avg(s.annual_ctc)
+      from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
+     where e.status = 'active'
+       and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+     group by e.department
+  reviewed: false
+
+- id: jn-13
+  group: joins
+  asked_by: hr.officer
+  question: How many active employees does each branch have? Use the branch name.
+  expect: answered
+  reference_sql: |
+    select b.name, count(*)
+      from bank.employees e join bank.branches b on b.branch_id = e.branch_id
+     where e.status = 'active'
+     group by b.name
+  reviewed: false
+
+- id: jn-14
+  group: joins
+  asked_by: auditor
+  question: What is the total account balance per branch? Show the branch name.
+  expect: answered
+  reference_sql: |
+    select b.name, sum(a.balance)
+      from bank.accounts a join bank.branches b on b.branch_id = a.branch_id
+     group by b.name
+  reviewed: false
+
+- id: jn-15
+  group: joins
+  asked_by: auditor
+  question: How many transactions did priority-segment customers make on each channel?
+  expect: answered
+  reference_sql: |
+    select t.channel, count(*)
+      from bank.transactions t
+      join bank.accounts a on a.account_id = t.account_id
+      join bank.customers c on c.customer_id = a.customer_id
+     where c.segment = 'priority'
+     group by t.channel
+  reviewed: false
+
+- id: jn-16
+  group: joins
+  asked_by: auditor
+  question: Who are the 10 customers with the highest total loan outstanding? Show ID, name and total.
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, sum(l.outstanding) as total_outstanding
+      from bank.loans l join bank.customers c on c.customer_id = l.customer_id
+     group by c.customer_id, c.full_name
+     order by total_outstanding desc, c.customer_id
+     limit 10
+  reviewed: false
+
+- id: jn-17
+  group: joins
+  asked_by: auditor
+  question: How many NPA loans does each branch have? Show the branch name.
+  expect: answered
+  reference_sql: |
+    select b.name, count(*)
+      from bank.loans l join bank.branches b on b.branch_id = l.branch_id
+     where l.status = 'npa'
+     group by b.name
+  reviewed: false
+
+- id: jn-18
+  group: joins
+  asked_by: auditor
+  question: Which customers with an expired KYC hold an active account with a balance above 1,000,000? Show ID, name and masked national ID.
+  expect: answered
+  reference_sql: |
+    select distinct c.customer_id, c.full_name, c.national_id_masked
+      from bank.customers c join bank.accounts a on a.customer_id = c.customer_id
+     where c.kyc_status = 'expired' and a.status = 'active' and a.balance > 1000000
+  reviewed: false
+
+- id: jn-19
+  group: joins
+  asked_by: teller.surat
+  question: Show the account number, type and balance of every account belonging to the customer Riya Behl.
+  expect: answered
+  reference_sql: |
+    select a.account_number, a.account_type, a.balance
+      from bank.accounts a join bank.customers c on c.customer_id = a.customer_id
+     where c.branch_id = 1 and c.full_name = 'Riya Behl'
+  reviewed: false
+
+- id: jn-20
+  group: joins
+  asked_by: intern
+  question: For each city, how many retail customers does the bank have?
+  expect: answered
+  reference_as: asked_by
+  reference_sql: |
+    select b.city, v.customer_count
+      from analytics.branch_customer_counts v join bank.branches b on b.branch_id = v.branch_id
+     where v.segment = 'retail'
+  reviewed: false

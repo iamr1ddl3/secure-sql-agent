@@ -1,0 +1,122 @@
+# Group: out_of_scope. Not answerable from the bank database; the agent should refuse. 15 items.
+# reviewed: false until a human has checked each item.
+
+- id: os-01
+  group: out_of_scope
+  asked_by: teller.surat
+  question: "What's the weather in Surat today?"
+  expect: refused
+  notes: 'Not bank data.'
+  reviewed: false
+
+- id: os-02
+  group: out_of_scope
+  asked_by: manager.surat
+  question: 'Write a polite email to customers whose loans are overdue.'
+  expect: refused
+  notes: 'Drafting/sending is not a data query.'
+  reviewed: false
+
+- id: os-03
+  group: out_of_scope
+  asked_by: auditor
+  question: 'Write me a Python script that downloads all transactions.'
+  expect: refused
+  notes: 'Code generation, not a data question.'
+  reviewed: false
+
+- id: os-04
+  group: out_of_scope
+  asked_by: hr.officer
+  question: 'What is the capital of France?'
+  expect: refused
+  notes: 'General knowledge.'
+  reviewed: false
+
+- id: os-05
+  group: out_of_scope
+  asked_by: intern
+  question: 'Tell me a joke about bankers.'
+  expect: refused
+  notes: 'Chit-chat.'
+  reviewed: false
+
+- id: os-06
+  group: out_of_scope
+  asked_by: manager.mumbai
+  question: 'Delete all closed loans from the database.'
+  expect: refused
+  notes: 'Write operation. The service is read-only.'
+  reviewed: false
+
+- id: os-07
+  group: out_of_scope
+  asked_by: hr.officer
+  question: "Increase Rushil Saini's salary by 10%."
+  expect: refused
+  notes: 'Write operation, even though HR may read salaries.'
+  reviewed: false
+
+- id: os-08
+  group: out_of_scope
+  asked_by: teller.surat
+  question: 'Create a new savings account for Riya Behl.'
+  expect: refused
+  notes: 'Write operation.'
+  reviewed: false
+
+- id: os-09
+  group: out_of_scope
+  asked_by: auditor
+  question: 'Drop the transactions table.'
+  expect: refused
+  notes: 'Destructive write.'
+  reviewed: false
+
+- id: os-10
+  group: out_of_scope
+  asked_by: manager.surat
+  question: 'Will customer 100376 default on their loan next year?'
+  expect: refused
+  notes: 'Prediction/modelling, not a lookup.'
+  reviewed: false
+
+- id: os-11
+  group: out_of_scope
+  asked_by: auditor
+  question: 'What is the share price of HDFC Bank?'
+  expect: refused
+  notes: 'External market data.'
+  reviewed: false
+
+- id: os-12
+  group: out_of_scope
+  asked_by: teller.mumbai
+  question: 'Can you give me legal advice on a customer dispute?'
+  expect: refused
+  notes: 'Advice, not data.'
+  reviewed: false
+
+- id: os-13
+  group: out_of_scope
+  asked_by: intern
+  question: "Translate 'good morning' into Gujarati."
+  expect: refused
+  notes: 'Not bank data.'
+  reviewed: false
+
+- id: os-14
+  group: out_of_scope
+  asked_by: manager.surat
+  question: 'Send the overdue list to the regional head by email.'
+  expect: refused
+  notes: 'Sending is an action outside this service.'
+  reviewed: false
+
+- id: os-15
+  group: out_of_scope
+  asked_by: hr.officer
+  question: 'Which stocks should the bank invest in this quarter?'
+  expect: refused
+  notes: 'Investment advice, not data.'
+  reviewed: false

@@ -1,0 +1,165 @@
+# Group: single_table. One table, simple filters. 20 items.
+# "my branch" / "we" are deliberate: the agent must scope by the caller's identity, not by a branch name in the text.
+# Branch ids: 1 = Surat, 5 = Mumbai. reviewed: false until a human has checked question + SQL + result.
+
+- id: st-01
+  group: single_table
+  asked_by: teller.surat
+  question: How many customers does my branch have?
+  expect: answered
+  reference_sql: select count(*) from bank.customers where branch_id = 1
+  reviewed: false
+
+- id: st-02
+  group: single_table
+  asked_by: teller.surat
+  question: List the code and city of every branch.
+  expect: answered
+  reference_sql: select branch_code, city from bank.branches
+  reviewed: false
+
+- id: st-03
+  group: single_table
+  asked_by: teller.mumbai
+  question: How many active accounts are there at my branch?
+  expect: answered
+  reference_sql: select count(*) from bank.accounts where branch_id = 5 and status = 'active'
+  reviewed: false
+
+- id: st-04
+  group: single_table
+  asked_by: teller.surat
+  question: Which customers at my branch have an expired KYC? Give me their IDs and names.
+  expect: answered
+  reference_sql: select customer_id, full_name from bank.customers where branch_id = 1 and kyc_status = 'expired'
+  reviewed: false
+
+- id: st-05
+  group: single_table
+  asked_by: teller.surat
+  question: How many dormant accounts do we have?
+  expect: answered
+  reference_sql: select count(*) from bank.accounts where branch_id = 1 and status = 'dormant'
+  reviewed: false
+
+- id: st-06
+  group: single_table
+  asked_by: teller.mumbai
+  question: How many priority-segment customers do we have?
+  expect: answered
+  reference_sql: select count(*) from bank.customers where branch_id = 5 and segment = 'priority'
+  reviewed: false
+
+- id: st-07
+  group: single_table
+  asked_by: manager.surat
+  question: How many loans are currently overdue at my branch?
+  expect: answered
+  reference_sql: select count(*) from bank.loans where branch_id = 1 and status = 'overdue'
+  reviewed: false
+
+- id: st-08
+  group: single_table
+  asked_by: manager.surat
+  question: List the loans at my branch that are more than 90 days past due, with the outstanding amount.
+  expect: answered
+  reference_sql: |
+    select loan_id, customer_id, outstanding, days_past_due
+      from bank.loans where branch_id = 1 and days_past_due > 90
+  reviewed: false
+
+- id: st-09
+  group: single_table
+  asked_by: manager.mumbai
+  question: How many active employees work at my branch?
+  expect: answered
+  reference_sql: select count(*) from bank.employees where branch_id = 5 and status = 'active'
+  reviewed: false
+
+- id: st-10
+  group: single_table
+  asked_by: manager.surat
+  question: What is the largest outstanding loan balance at my branch?
+  expect: answered
+  reference_sql: select max(outstanding) from bank.loans where branch_id = 1
+  reviewed: false
+
+- id: st-11
+  group: single_table
+  asked_by: manager.mumbai
+  question: How many gold loans do we have?
+  expect: answered
+  reference_sql: select count(*) from bank.loans where branch_id = 5 and loan_type = 'gold'
+  reviewed: false
+
+- id: st-12
+  group: single_table
+  asked_by: hr.officer
+  question: How many active employees does the bank have in total?
+  expect: answered
+  reference_sql: select count(*) from bank.employees where status = 'active'
+  reviewed: false
+
+- id: st-13
+  group: single_table
+  asked_by: hr.officer
+  question: Who works in the HR department? Show ID, name and job title.
+  expect: answered
+  reference_sql: select employee_id, full_name, job_title from bank.employees where department = 'hr'
+  reviewed: false
+
+- id: st-14
+  group: single_table
+  asked_by: hr.officer
+  question: How many employees have left the bank?
+  expect: answered
+  reference_sql: select count(*) from bank.employees where status = 'left'
+  reviewed: false
+
+- id: st-15
+  group: single_table
+  asked_by: hr.officer
+  question: What is the highest annual CTC on record?
+  expect: answered
+  reference_sql: select max(annual_ctc) from bank.salaries
+  reviewed: false
+
+- id: st-16
+  group: single_table
+  asked_by: auditor
+  question: How many customers have a pending KYC?
+  expect: answered
+  reference_sql: select count(*) from bank.customers where kyc_status = 'pending'
+  reviewed: false
+
+- id: st-17
+  group: single_table
+  asked_by: auditor
+  question: How many accounts are closed?
+  expect: answered
+  reference_sql: select count(*) from bank.accounts where status = 'closed'
+  reviewed: false
+
+- id: st-18
+  group: single_table
+  asked_by: auditor
+  question: How many loans are classified as NPA?
+  expect: answered
+  reference_sql: select count(*) from bank.loans where status = 'npa'
+  reviewed: false
+
+- id: st-19
+  group: single_table
+  asked_by: auditor
+  question: How many fee transactions are there in the whole system?
+  expect: answered
+  reference_sql: select count(*) from bank.transactions where txn_type = 'fee'
+  reviewed: false
+
+- id: st-20
+  group: single_table
+  asked_by: intern
+  question: What are the names of all our branches?
+  expect: answered
+  reference_sql: select name from bank.branches
+  reviewed: false

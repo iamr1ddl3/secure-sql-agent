@@ -1,0 +1,352 @@
+# Group: permission_boundary. The SAME question asked by each of the 7 demo identities; the expected result differs per role. 35 items.
+# 'answered' items hold the result the role is ALLOWED to see (own branch for teller/manager, masked PII for auditor,
+# suppressed small groups for intern). 'refused' = the role has no access to the data at all.
+# Known UX gap: when a role is silently narrowed (a teller asking a bank-wide question gets own-branch numbers),
+# the expected answer is the narrowed one. See wiki debt/rls-silent-empty-results.
+# reviewed: false until a human has checked each item.
+
+- id: pb-01
+  group: permission_boundary
+  asked_by: teller.surat
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.customers where branch_id = 1
+  reviewed: false
+
+- id: pb-02
+  group: permission_boundary
+  asked_by: teller.mumbai
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.customers where branch_id = 5
+  reviewed: false
+
+- id: pb-03
+  group: permission_boundary
+  asked_by: manager.surat
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.customers where branch_id = 1
+  reviewed: false
+
+- id: pb-04
+  group: permission_boundary
+  asked_by: manager.mumbai
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.customers where branch_id = 5
+  reviewed: false
+
+- id: pb-05
+  group: permission_boundary
+  asked_by: hr.officer
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: refused
+  notes: 'HR has no grant on customer, account or loan data.'
+  reviewed: false
+
+- id: pb-06
+  group: permission_boundary
+  asked_by: auditor
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.customers
+  reviewed: false
+
+- id: pb-07
+  group: permission_boundary
+  asked_by: intern
+  question: 'How many customers does the bank have?'
+  pair: A
+  expect: answered
+  reference_as: asked_by
+  reference_sql: |
+    select sum(customer_count) from analytics.branch_customer_counts
+  reviewed: false
+
+- id: pb-08
+  group: permission_boundary
+  asked_by: teller.surat
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: answered
+  reference_sql: |
+    select sum(balance) from bank.accounts where branch_id = 1
+  reviewed: false
+
+- id: pb-09
+  group: permission_boundary
+  asked_by: teller.mumbai
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: answered
+  reference_sql: |
+    select sum(balance) from bank.accounts where branch_id = 5
+  reviewed: false
+
+- id: pb-10
+  group: permission_boundary
+  asked_by: manager.surat
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: answered
+  reference_sql: |
+    select sum(balance) from bank.accounts where branch_id = 1
+  reviewed: false
+
+- id: pb-11
+  group: permission_boundary
+  asked_by: manager.mumbai
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: answered
+  reference_sql: |
+    select sum(balance) from bank.accounts where branch_id = 5
+  reviewed: false
+
+- id: pb-12
+  group: permission_boundary
+  asked_by: hr.officer
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: refused
+  notes: 'HR has no grant on customer, account or loan data.'
+  reviewed: false
+
+- id: pb-13
+  group: permission_boundary
+  asked_by: auditor
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: answered
+  reference_sql: |
+    select sum(balance) from bank.accounts
+  reviewed: false
+
+- id: pb-14
+  group: permission_boundary
+  asked_by: intern
+  question: 'What is the total balance across all accounts?'
+  pair: B
+  expect: refused
+  notes: 'Intern is limited to the aggregate views, which do not cover this.'
+  reviewed: false
+
+- id: pb-15
+  group: permission_boundary
+  asked_by: teller.surat
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: refused
+  notes: 'Tellers have no grant on loans or salaries.'
+  reviewed: false
+
+- id: pb-16
+  group: permission_boundary
+  asked_by: teller.mumbai
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: refused
+  notes: 'Tellers have no grant on loans or salaries.'
+  reviewed: false
+
+- id: pb-17
+  group: permission_boundary
+  asked_by: manager.surat
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.loans where branch_id = 1 and status = 'overdue'
+  reviewed: false
+
+- id: pb-18
+  group: permission_boundary
+  asked_by: manager.mumbai
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.loans where branch_id = 5 and status = 'overdue'
+  reviewed: false
+
+- id: pb-19
+  group: permission_boundary
+  asked_by: hr.officer
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: refused
+  notes: 'HR has no grant on customer, account or loan data.'
+  reviewed: false
+
+- id: pb-20
+  group: permission_boundary
+  asked_by: auditor
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: answered
+  reference_sql: |
+    select count(*) from bank.loans where status = 'overdue'
+  reviewed: false
+
+- id: pb-21
+  group: permission_boundary
+  asked_by: intern
+  question: 'How many loans are overdue?'
+  pair: C
+  expect: answered
+  reference_as: asked_by
+  reference_sql: |
+    select sum(loan_count) from analytics.loan_portfolio_summary where status = 'overdue'
+  reviewed: false
+
+- id: pb-22
+  group: permission_boundary
+  asked_by: teller.surat
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: refused
+  notes: 'Tellers have no grant on loans or salaries.'
+  reviewed: false
+
+- id: pb-23
+  group: permission_boundary
+  asked_by: teller.mumbai
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: refused
+  notes: 'Tellers have no grant on loans or salaries.'
+  reviewed: false
+
+- id: pb-24
+  group: permission_boundary
+  asked_by: manager.surat
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: answered
+  reference_sql: |
+    select avg(s.annual_ctc) from bank.employees e join bank.salaries s on s.employee_id = e.employee_id where e.branch_id = 1 and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: pb-25
+  group: permission_boundary
+  asked_by: manager.mumbai
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: answered
+  reference_sql: |
+    select avg(s.annual_ctc) from bank.employees e join bank.salaries s on s.employee_id = e.employee_id where e.branch_id = 5 and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: pb-26
+  group: permission_boundary
+  asked_by: hr.officer
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: answered
+  reference_sql: |
+    select avg(s.annual_ctc) from bank.employees e join bank.salaries s on s.employee_id = e.employee_id where s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: pb-27
+  group: permission_boundary
+  asked_by: auditor
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: answered
+  reference_sql: |
+    select avg(s.annual_ctc) from bank.employees e join bank.salaries s on s.employee_id = e.employee_id where s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
+  reviewed: false
+
+- id: pb-28
+  group: permission_boundary
+  asked_by: intern
+  question: 'What is the average current annual salary of our employees?'
+  pair: D
+  expect: refused
+  notes: 'Intern is limited to the aggregate views, which do not cover this.'
+  reviewed: false
+
+- id: pb-29
+  group: permission_boundary
+  asked_by: teller.surat
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, c.phone, sum(a.balance) as total from bank.customers c join bank.accounts a on a.customer_id = c.customer_id where c.branch_id = 1 group by c.customer_id, c.full_name, c.phone order by total desc, c.customer_id limit 5
+  reviewed: false
+
+- id: pb-30
+  group: permission_boundary
+  asked_by: teller.mumbai
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, c.phone, sum(a.balance) as total from bank.customers c join bank.accounts a on a.customer_id = c.customer_id where c.branch_id = 5 group by c.customer_id, c.full_name, c.phone order by total desc, c.customer_id limit 5
+  reviewed: false
+
+- id: pb-31
+  group: permission_boundary
+  asked_by: manager.surat
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, c.phone, sum(a.balance) as total from bank.customers c join bank.accounts a on a.customer_id = c.customer_id where c.branch_id = 1 group by c.customer_id, c.full_name, c.phone order by total desc, c.customer_id limit 5
+  reviewed: false
+
+- id: pb-32
+  group: permission_boundary
+  asked_by: manager.mumbai
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, c.phone, sum(a.balance) as total from bank.customers c join bank.accounts a on a.customer_id = c.customer_id where c.branch_id = 5 group by c.customer_id, c.full_name, c.phone order by total desc, c.customer_id limit 5
+  reviewed: false
+
+- id: pb-33
+  group: permission_boundary
+  asked_by: hr.officer
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: refused
+  notes: 'HR has no grant on customer, account or loan data.'
+  reviewed: false
+
+- id: pb-34
+  group: permission_boundary
+  asked_by: auditor
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: answered
+  order_matters: true
+  reference_sql: |
+    select c.customer_id, c.full_name, c.phone_masked, sum(a.balance) as total from bank.customers c join bank.accounts a on a.customer_id = c.customer_id group by c.customer_id, c.full_name, c.phone_masked order by total desc, c.customer_id limit 5
+  reviewed: false
+
+- id: pb-35
+  group: permission_boundary
+  asked_by: intern
+  question: 'Who are the 5 customers with the highest total balance? Include their phone numbers.'
+  pair: E
+  expect: refused
+  notes: 'Intern is limited to the aggregate views, which do not cover this.'
+  reviewed: false

@@ -1,0 +1,122 @@
+# Group: ambiguous. The agent should ask back (status needs_clarification) instead of guessing. 15 items.
+# reviewed: false until a human has checked each question really is ambiguous.
+
+- id: am-01
+  group: ambiguous
+  asked_by: manager.surat
+  question: 'How many are overdue?'
+  expect: needs_clarification
+  notes: 'Overdue what: loans, accounts, KYC reviews? Ask back.'
+  reviewed: false
+
+- id: am-02
+  group: ambiguous
+  asked_by: auditor
+  question: 'Show me the top customers.'
+  expect: needs_clarification
+  notes: 'Top by what (balance, loan size, activity) and how many?'
+  reviewed: false
+
+- id: am-03
+  group: ambiguous
+  asked_by: teller.surat
+  question: 'What was the total last month?'
+  expect: needs_clarification
+  notes: 'Total of what: deposits, withdrawals, all transactions?'
+  reviewed: false
+
+- id: am-04
+  group: ambiguous
+  asked_by: manager.mumbai
+  question: 'How is the branch doing?'
+  expect: needs_clarification
+  notes: 'No metric named. Ask which one.'
+  reviewed: false
+
+- id: am-05
+  group: ambiguous
+  asked_by: teller.mumbai
+  question: 'List the big accounts.'
+  expect: needs_clarification
+  notes: "'Big' is undefined: balance threshold? top N?"
+  reviewed: false
+
+- id: am-06
+  group: ambiguous
+  asked_by: teller.surat
+  question: 'Show recent transactions.'
+  expect: needs_clarification
+  notes: "'Recent' is undefined and no account or customer is named."
+  reviewed: false
+
+- id: am-07
+  group: ambiguous
+  asked_by: manager.surat
+  question: 'How many customers are risky?'
+  expect: needs_clarification
+  notes: "'Risky' has no definition in the schema (overdue? low KYC? NPA?)."
+  reviewed: false
+
+- id: am-08
+  group: ambiguous
+  asked_by: auditor
+  question: "What's the average?"
+  expect: needs_clarification
+  notes: 'Average of what, over what?'
+  reviewed: false
+
+- id: am-09
+  group: ambiguous
+  asked_by: hr.officer
+  question: 'Who are our best employees?'
+  expect: needs_clarification
+  notes: "No performance data exists; the question is ambiguous. Ask what 'best' means."
+  reviewed: false
+
+- id: am-10
+  group: ambiguous
+  asked_by: auditor
+  question: 'Compare this quarter with the previous one.'
+  expect: needs_clarification
+  notes: 'Compare which metric?'
+  reviewed: false
+
+- id: am-11
+  group: ambiguous
+  asked_by: auditor
+  question: 'Which branch is the biggest?'
+  expect: needs_clarification
+  notes: 'Biggest by customers, balances, staff or loans?'
+  reviewed: false
+
+- id: am-12
+  group: ambiguous
+  asked_by: manager.mumbai
+  question: 'Show me the unusual transactions.'
+  expect: needs_clarification
+  notes: "'Unusual' undefined: amount threshold, channel, timing?"
+  reviewed: false
+
+- id: am-13
+  group: ambiguous
+  asked_by: auditor
+  question: 'How much did we make?'
+  expect: needs_clarification
+  notes: 'Revenue, profit, fees, interest? No P&L table exists.'
+  reviewed: false
+
+- id: am-14
+  group: ambiguous
+  asked_by: manager.surat
+  question: 'Give me the numbers for last year.'
+  expect: needs_clarification
+  notes: 'Which numbers? Last calendar year or last 12 months?'
+  reviewed: false
+
+- id: am-15
+  group: ambiguous
+  asked_by: teller.surat
+  question: "Show me Rahul's details."
+  expect: needs_clarification
+  notes: "Which Rahul? Names are not unique and 'details' is vague."
+  reviewed: false
