@@ -1,19 +1,19 @@
 # Every model is called through OpenRouter (OpenAI-compatible API), so latency and
 # cost per 1,000 queries are measured the same way for every vendor.
 # Pin exact model ids; the eval report records which id produced which number.
-# Candidates are placeholders: confirm current ids at https://openrouter.ai/models before the first eval run.
+# Ids confirmed against https://openrouter.ai/api/v1/models on 2026-11-17 (USD per 1M tokens, in/out, in the comments).
 models:
   primary:
-    id: anthropic/claude-sonnet-4.5     # TODO confirm latest Sonnet id on OpenRouter
+    id: anthropic/claude-sonnet-5.5     # $2 / $10, latest Sonnet
     role: sql_generation
   cheap:
-    id: anthropic/claude-haiku-4.5      # TODO confirm
+    id: anthropic/claude-haiku-5.5      # $0.1 / $0.5, latest Haiku
     role: sql_generation
   challenger_open:
-    id: qwen/qwen3-coder                # TODO confirm; open-weights challenger
+    id: qwen/qwen3-coder                # $0.3 / $1, open-weights challenger
     role: sql_generation
   challenger_other:
-    id: openai/gpt-5-mini               # TODO confirm
+    id: openai/gpt-5-mini               # $0.25 / $2
     role: sql_generation
 defaults:
   temperature: 0
