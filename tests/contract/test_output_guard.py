@@ -23,3 +23,9 @@ def test_row_cap():
     assert len(out) == 3 and truncated and hits[0].policy_id == "output_guard.row_cap"
     _, out, truncated, _ = guard("teller", [("x", "int4")], [(i,) for i in range(2000)], 5000)
     assert len(out) == 1000 and truncated
+
+
+def test_decimals_become_numbers():
+    from decimal import Decimal
+    _, out, _, _ = guard("teller", [("x", "numeric")], [(Decimal("17480062.50"),)], 5)
+    assert out == [[17480062.5]]

@@ -104,3 +104,17 @@ def run_as_user(
 def _type_name(conn: psycopg.Connection, oid: int) -> str:
     info = conn.adapters.types.get(oid)
     return info.name if info else str(oid)
+
+
+def role_of(conn: psycopg.Connection, sub: uuid.UUID, *, key_id: str, secret: bytes) -> str:
+    """Business role of a verified user, asked of the database (same binding as run_as_user)."""
+    if conn.autocommit:
+        raise RuntimeError("connection must not be in autocommit mode")
+    with conn.transaction(), conn.cursor() as cur:
+        cur.execute("set transaction read only")
+        bind_identity(cur, sub, key_id, secret)
+        cur.execute("select app_role from app.whoami()")
+        row = cur.fetchone()
+        if row is None:
+            raise NotStaffError(str(sub))
+        return row[0]

@@ -37,7 +37,7 @@ Select Subquery With CTE Union Intersect Except Table TableAlias Alias Column Id
 Paren And Or Not EQ NEQ GT GTE LT LTE In Between Like ILike Is Add Sub Mul Div Mod Neg Cast DataType Case If
 Coalesce Nullif Greatest Least Count Sum Avg Min Max Round Abs Lower Upper Length Concat Substring Extract
 TimestampTrunc DateTrunc AtTimeZone Filter Distinct From Join Where Group Having Order Ordered Limit Offset Var
-Interval CurrentDate Exists Tuple Ceil Floor
+Interval CurrentDate Exists Tuple Ceil Floor Lateral
 """.split())
 
 
@@ -87,4 +87,6 @@ def validate(sql: str, app_role: str) -> Validated:
             tables.append(name)
         if isinstance(node, exp.Column) and node.name.lower() in DENIED_COLUMNS.get(app_role, ()):
             raise ValidationError("validator.pii_column", f"{node.name} is not available to role {app_role} (use the masked column)")
+    if not tables:
+        raise ValidationError("validator.no_table", "the query reads no table, so it cannot answer from the bank's data")
     return Validated(tree.sql(dialect="postgres"), sorted(set(tables)))

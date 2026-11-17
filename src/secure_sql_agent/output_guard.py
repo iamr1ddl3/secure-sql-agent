@@ -8,6 +8,7 @@ Tellers and managers legitimately see their own branch's identifiers, so nothing
 from __future__ import annotations
 
 import re
+from decimal import Decimal
 
 from .contracts import Column, PolicyHit
 
@@ -30,6 +31,12 @@ def _mask_text(s: str, hits: set[str]) -> str:
     return s
 
 
+def _cell(v, mask: bool, hits: set[str]):
+    if isinstance(v, Decimal):  # JSON numbers, not strings, so clients and the eval compare values, not text
+        return float(v)
+    return _mask_text(v, hits) if mask and isinstance(v, str) else v
+
+
 def guard(app_role: str, columns: list[tuple[str, str]], rows: list[tuple], max_rows: int):
     """Return (Column list, rows as lists, truncated_by_cap, policy hits)."""
     cap = min(max_rows, ROW_CAP_MAX)
@@ -37,7 +44,7 @@ def guard(app_role: str, columns: list[tuple[str, str]], rows: list[tuple], max_
     hits: set[str] = set()
     out = []
     for r in rows[:cap]:
-        out.append([_mask_text(v, hits) if app_role in NO_RAW_PII and isinstance(v, str) else v for v in r])
+        out.append([_cell(v, app_role in NO_RAW_PII, hits) for v in r])
     policy = [PolicyHit(policy_id=f"output_guard.mask_{h}", stage="output_guard", action="mask",
                         detail=f"masked {h}-shaped value in a text cell") for h in sorted(hits)]
     if len(rows) > cap:

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -20,7 +21,7 @@ import jwt
 
 sys.path.insert(0, str(Path(__file__).parent / "golden"))
 from score import score, summarize  # noqa: E402
-from verify import ROOT, connections, load_items, reference_rows  # noqa: E402
+from verify import KEY_ID, ROOT, connections, load_items, reference_rows  # noqa: E402
 
 from secure_sql_agent.contracts import QueryRequest  # noqa: E402
 from secure_sql_agent.identity import IdentityVerifier  # noqa: E402
@@ -38,9 +39,16 @@ def token(asked_by: str) -> str:
 
 def main() -> int:
     items = load_items(sys.argv[1:])
-    svc = QueryService(IdentityVerifier(issuer=ISS, hs256_secret=SECRET))
     results, latencies, costs = [], [], []
     with connections() as (admin, agent, secret):
+        live = bool(os.environ.get("OPENROUTER_API_KEY"))
+        if live:  # real pipeline: shared agent connection, the eval's temporary signing key
+            from secure_sql_agent.service import build_pipeline
+            pipeline = build_pipeline(lambda: agent, owns_conn=False, key_id=KEY_ID, secret=secret)
+        else:
+            print("WARNING: OPENROUTER_API_KEY not set; scoring the stub pipeline (every item will fail)")
+            pipeline = None
+        svc = QueryService(IdentityVerifier(issuer=ISS, hs256_secret=SECRET), pipeline)
         for it in items:
             truth = reference_rows(it, admin, agent, secret)[0] if it["expect"] == "answered" else None
             t0 = time.perf_counter()
@@ -52,6 +60,7 @@ def main() -> int:
             if "cost_usd" in usage:
                 costs.append(usage["cost_usd"])
     summary = summarize(results, latencies, costs)
+    summary["pipeline"] = "live" if live else "stub"
     report = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "summary": summary, "results": results}
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)

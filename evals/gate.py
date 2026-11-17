@@ -33,6 +33,9 @@ def main() -> int:
         BASELINE.write_text(json.dumps({k: current[k] for k in ("execution_accuracy", "overall", "per_group")}, indent=2) + "\n")
         print(f"baseline updated: {BASELINE.relative_to(ROOT)}")
         return 0
+    if current.get("pipeline") == "stub":  # CI has no model key yet: nothing real to compare
+        print("SKIPPED: report is from the stub pipeline (no OPENROUTER_API_KEY). Add the key to CI to enforce the gate.")
+        return 0
     fails = check(current, json.loads(BASELINE.read_text()))
     print(f"execution_accuracy={current['execution_accuracy']} overall={current['overall']}")
     for f in fails:

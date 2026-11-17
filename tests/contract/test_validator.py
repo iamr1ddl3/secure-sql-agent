@@ -77,3 +77,9 @@ def test_size_and_garbage():
     bad("", "teller", "validator.size")
     bad("select 1" + " " * 5000, "teller", "validator.size")
     bad("select from from", "teller", "validator.parse_error")
+
+
+def test_query_without_a_table_is_refused():
+    bad("select 'no customer table available' as customer_count", "hr", "validator.no_table")
+    bad("select 1", "teller", "validator.no_table")
+    validate("select b.name from bank.branches b, lateral (select 1 as x) l", "teller")
