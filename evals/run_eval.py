@@ -39,6 +39,7 @@ def token(asked_by: str) -> str:
 
 def main() -> int:
     args = sys.argv[1:]
+    tag = next((a.split("=", 1)[1] for a in args if a.startswith("--tag=")), None)  # e.g. a model name: writes eval_<tag>.json
     guards = "--guards-off" not in args  # ablation: input guard + scope guard + router off (validator and DB stay on)
     items = load_items([a for a in args if not a.startswith("--")])
     results, latencies, costs = [], [], []
@@ -64,12 +65,15 @@ def main() -> int:
     summary = summarize(results, latencies, costs)
     summary["pipeline"] = "live" if live else "stub"
     summary["guards"] = "on" if guards else "off"
+    summary["sql_model"] = pipeline.sql_llm.model_id if live else None
     report = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "summary": summary, "results": results}
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     text = json.dumps(report, indent=2)
     stamp = report["at"].replace(":", "").replace("-", "")
-    if guards:  # eval_latest.json is what the CI gate reads; the ablation run must not overwrite it
+    if tag:
+        (out / f"eval_{tag}.json").write_text(text)
+    elif guards:  # eval_latest.json is what the CI gate reads; the ablation run must not overwrite it
         (out / "eval_latest.json").write_text(text)
     else:
         (out / "eval_guards_off.json").write_text(text)
