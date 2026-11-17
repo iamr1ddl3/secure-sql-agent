@@ -1,0 +1,10 @@
+analytics.branch_customer_counts -- aggregate view; small groups suppressed
+  (branch_id smallint, branch_name text, segment text, customer_count bigint)
+analytics.branch_monthly_flows -- aggregate view; groups under 5 rows are suppressed, so totals can be lower than the real ones
+  (branch_id smallint, branch_name text, city text, month date, txn_count bigint, inflow_total numeric, outflow_total numeric)
+analytics.headcount_by_branch -- aggregate view of ACTIVE staff; small groups suppressed
+  (branch_id smallint, branch_name text, department text, headcount bigint)
+analytics.loan_portfolio_summary -- aggregate view; small groups suppressed
+  (branch_id smallint, branch_name text, loan_type text, status text, loan_count bigint, outstanding_total numeric)
+bank.branches -- bank branches
+  (branch_id smallint, branch_code text, name text, city text, state text, opened_on date)

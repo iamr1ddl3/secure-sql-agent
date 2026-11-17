@@ -40,6 +40,7 @@ def token(asked_by: str) -> str:
 def main() -> int:
     args = sys.argv[1:]
     tag = next((a.split("=", 1)[1] for a in args if a.startswith("--tag=")), None)  # e.g. a model name: writes eval_<tag>.json
+    semantic = "--semantic" in args   # with-ontology arm of the stage-2 eval
     guards = "--guards-off" not in args  # ablation: input guard + scope guard + router off (validator and DB stay on)
     items = load_items([a for a in args if not a.startswith("--")])
     results, latencies, costs = [], [], []
@@ -47,7 +48,7 @@ def main() -> int:
         live = bool(os.environ.get("OPENROUTER_API_KEY"))
         if live:  # real pipeline: shared agent connection, the eval's temporary signing key
             from secure_sql_agent.service import build_pipeline
-            pipeline = build_pipeline(lambda: agent, owns_conn=False, key_id=KEY_ID, secret=secret, guards=guards)
+            pipeline = build_pipeline(lambda: agent, owns_conn=False, key_id=KEY_ID, secret=secret, guards=guards, semantic=semantic)
         else:
             print("WARNING: OPENROUTER_API_KEY not set; scoring the stub pipeline (every item will fail)")
             pipeline = None
@@ -65,6 +66,7 @@ def main() -> int:
     summary = summarize(results, latencies, costs)
     summary["pipeline"] = "live" if live else "stub"
     summary["guards"] = "on" if guards else "off"
+    summary["ontology"] = "semantic" if semantic else "baseline"
     summary["sql_model"] = pipeline.sql_llm.model_id if live else None
     report = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "summary": summary, "results": results}
     out = ROOT / "reports"

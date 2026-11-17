@@ -100,6 +100,7 @@ class Pipeline:
     statement_timeout_ms: int = 5000
     owns_conn: bool = True   # False when the caller shares one connection (the eval harness)
     reviews: ReviewStore | None = None   # human approval queue for bulk raw-PII results
+    semantic: bool = False   # True = schema text from the ontology with synonyms, joins, row scope and business terms
     guards: bool = True      # False = ablation for the eval: skip input guard, scope guard and router (validator + database stay)
     _graph: object = field(init=False, default=None)
 
@@ -120,7 +121,7 @@ class Pipeline:
         user = s["question"]
         if s.get("error"):
             user = f"{s['question']}\n\nYour previous query failed.\nQuery: {s['sql']}\nError: {s['error']}\nWrite a corrected query."
-        c = self.sql_llm.complete(SQL_SYSTEM.format(schema=schema_for(s["role"]), as_of=self.as_of), user)
+        c = self.sql_llm.complete(SQL_SYSTEM.format(schema=schema_for(s["role"], self.semantic), as_of=self.as_of), user)
         s["usage"].add(c)
         m = re.search(r"```(?:sql)?\s*(.*?)```", c.text, re.DOTALL)
         if not m:  # prose instead of SQL: the model declined (usually because the role has no data for this)

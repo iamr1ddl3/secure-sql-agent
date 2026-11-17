@@ -1,0 +1,14 @@
+bank.accounts -- accounts; customer_id -> bank.customers, branch_id -> bank.branches
+  (account_id bigint, customer_id bigint, branch_id smallint, account_number text (PII), account_type text: savings|current|fixed_deposit, status text: active|dormant|closed, balance numeric, currency char(3), opened_on date, closed_on date, last_activity_at timestamptz, account_number_masked text)
+bank.branches -- bank branches
+  (branch_id smallint, branch_code text, name text, city text, state text, opened_on date)
+bank.customers -- customers; branch_id -> bank.branches
+  (customer_id bigint, branch_id smallint, full_name text, date_of_birth date, national_id text (PII), phone text (PII), email text, city text, segment text: retail|priority|sme, kyc_status text: verified|pending|expired, created_at timestamptz, national_id_masked text, phone_masked text)
+bank.employees -- employees; branch_id is NULL for head office
+  (employee_id int, branch_id smallint, full_name text, job_title text, department text: branch_ops|hr|audit|risk|it|executive|internship, email text, phone text (PII), hired_on date, status text: active|left, phone_masked text)
+bank.loans -- loans; customer_id -> bank.customers
+  (loan_id bigint, customer_id bigint, branch_id smallint, loan_type text: home|personal|auto|business|gold, principal numeric, interest_rate numeric, disbursed_on date, tenure_months int, outstanding numeric, days_past_due int, status text: current|overdue|npa|closed)
+bank.salaries -- salary history, several rows per employee; the CURRENT salary is the row with the latest effective_from
+  (employee_id int, effective_from date, annual_ctc numeric, currency char(3))
+bank.transactions -- transactions; account_id -> bank.accounts; amount is always positive, the sign comes from txn_type
+  (txn_id bigint, account_id bigint, branch_id smallint, txn_at timestamptz, txn_type text: deposit|withdrawal|transfer_in|transfer_out|fee|interest, channel text: branch|atm|upi|netbanking|neft|imps|system, amount numeric, balance_after numeric, description text)

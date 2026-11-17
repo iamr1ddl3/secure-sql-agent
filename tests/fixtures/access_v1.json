@@ -1,0 +1,51 @@
+{
+ "tables": {
+  "teller": [
+   "bank.accounts",
+   "bank.branches",
+   "bank.customers",
+   "bank.transactions"
+  ],
+  "branch_manager": [
+   "bank.accounts",
+   "bank.branches",
+   "bank.customers",
+   "bank.employees",
+   "bank.loans",
+   "bank.salaries",
+   "bank.transactions"
+  ],
+  "hr": [
+   "bank.branches",
+   "bank.employees",
+   "bank.salaries"
+  ],
+  "auditor": [
+   "analytics.branch_customer_counts",
+   "analytics.branch_monthly_flows",
+   "analytics.headcount_by_branch",
+   "analytics.loan_portfolio_summary",
+   "bank.accounts",
+   "bank.branches",
+   "bank.customers",
+   "bank.employees",
+   "bank.loans",
+   "bank.salaries",
+   "bank.transactions"
+  ],
+  "intern": [
+   "analytics.branch_customer_counts",
+   "analytics.branch_monthly_flows",
+   "analytics.headcount_by_branch",
+   "analytics.loan_portfolio_summary",
+   "bank.branches"
+  ]
+ },
+ "denied": {
+  "auditor": [
+   "account_number",
+   "national_id",
+   "phone"
+  ]
+ }
+}

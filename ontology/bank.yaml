@@ -1,0 +1,205 @@
+# Bank ontology: the single source for (1) which tables/columns each role may use (validator allowlist and the
+# model's schema text), (2) the grants and RLS in supabase/generated/, checked against the live database by
+# tests/permissions/test_ontology_matches_db.py, and (3) business vocabulary (synonyms, terms) for the model.
+# 7 base entities + 4 aggregate views. `note` text is shown to the model as-is.
+version: 1
+
+entities:
+  branch:
+    table: bank.branches
+    note: bank branches
+    synonyms: [office, outlet, location]
+    columns:
+      - {name: branch_id, type: smallint}
+      - {name: branch_code, type: text}
+      - {name: name, type: text}
+      - {name: city, type: text}
+      - {name: state, type: text}
+      - {name: opened_on, type: date}
+  customer:
+    table: bank.customers
+    note: "customers; branch_id -> bank.branches"
+    synonyms: [client, account holder, depositor]
+    joins: [{to: branch, via: [branch_id, branch_id]}]
+    columns:
+      - {name: customer_id, type: bigint}
+      - {name: branch_id, type: smallint}
+      - {name: full_name, type: text}
+      - {name: date_of_birth, type: date}
+      - {name: national_id, type: text, pii: raw}
+      - {name: phone, type: text, pii: raw}
+      - {name: email, type: text}
+      - {name: city, type: text}
+      - {name: segment, type: text, values: [retail, priority, sme]}
+      - {name: kyc_status, type: text, values: [verified, pending, expired]}
+      - {name: created_at, type: timestamptz}
+      - {name: national_id_masked, type: text}
+      - {name: phone_masked, type: text}
+  account:
+    table: bank.accounts
+    note: "accounts; customer_id -> bank.customers, branch_id -> bank.branches"
+    synonyms: [deposit account, a/c]
+    joins: [{to: customer, via: [customer_id, customer_id]}, {to: branch, via: [branch_id, branch_id]}]
+    columns:
+      - {name: account_id, type: bigint}
+      - {name: customer_id, type: bigint}
+      - {name: branch_id, type: smallint}
+      - {name: account_number, type: text, pii: raw}
+      - {name: account_type, type: text, values: [savings, current, fixed_deposit]}
+      - {name: status, type: text, values: [active, dormant, closed]}
+      - {name: balance, type: numeric}
+      - {name: currency, type: char(3)}
+      - {name: opened_on, type: date}
+      - {name: closed_on, type: date}
+      - {name: last_activity_at, type: timestamptz}
+      - {name: account_number_masked, type: text}
+  transaction:
+    table: bank.transactions
+    note: "transactions; account_id -> bank.accounts; amount is always positive, the sign comes from txn_type"
+    synonyms: [txn, payment, transfer, movement]
+    joins: [{to: account, via: [account_id, account_id]}]
+    columns:
+      - {name: txn_id, type: bigint}
+      - {name: account_id, type: bigint}
+      - {name: branch_id, type: smallint}
+      - {name: txn_at, type: timestamptz}
+      - {name: txn_type, type: text, values: [deposit, withdrawal, transfer_in, transfer_out, fee, interest]}
+      - {name: channel, type: text, values: [branch, atm, upi, netbanking, neft, imps, system]}
+      - {name: amount, type: numeric}
+      - {name: balance_after, type: numeric}
+      - {name: description, type: text}
+  loan:
+    table: bank.loans
+    note: "loans; customer_id -> bank.customers"
+    synonyms: [credit, advance, borrowing]
+    joins: [{to: customer, via: [customer_id, customer_id]}]
+    columns:
+      - {name: loan_id, type: bigint}
+      - {name: customer_id, type: bigint}
+      - {name: branch_id, type: smallint}
+      - {name: loan_type, type: text, values: [home, personal, auto, business, gold]}
+      - {name: principal, type: numeric}
+      - {name: interest_rate, type: numeric}
+      - {name: disbursed_on, type: date}
+      - {name: tenure_months, type: int}
+      - {name: outstanding, type: numeric}
+      - {name: days_past_due, type: int}
+      - {name: status, type: text, values: [current, overdue, npa, closed]}
+  employee:
+    table: bank.employees
+    note: "employees; branch_id is NULL for head office"
+    synonyms: [staff, colleague, team member]
+    joins: [{to: branch, via: [branch_id, branch_id]}]
+    columns:
+      - {name: employee_id, type: int}
+      - {name: branch_id, type: smallint}
+      - {name: full_name, type: text}
+      - {name: job_title, type: text}
+      - {name: department, type: text, values: [branch_ops, hr, audit, risk, it, executive, internship]}
+      - {name: email, type: text}
+      - {name: phone, type: text, pii: raw}
+      - {name: hired_on, type: date}
+      - {name: status, type: text, values: [active, left]}
+      - {name: phone_masked, type: text}
+  salary:
+    table: bank.salaries
+    note: "salary history, several rows per employee; the CURRENT salary is the row with the latest effective_from"
+    synonyms: [pay, CTC, compensation, remuneration]
+    joins: [{to: employee, via: [employee_id, employee_id]}]
+    columns:
+      - {name: employee_id, type: int}
+      - {name: effective_from, type: date}
+      - {name: annual_ctc, type: numeric}
+      - {name: currency, type: char(3)}
+  branch_monthly_flows:
+    table: analytics.branch_monthly_flows
+    kind: view
+    note: "aggregate view; groups under 5 rows are suppressed, so totals can be lower than the real ones"
+    columns:
+      - {name: branch_id, type: smallint}
+      - {name: branch_name, type: text}
+      - {name: city, type: text}
+      - {name: month, type: date}
+      - {name: txn_count, type: bigint}
+      - {name: inflow_total, type: numeric}
+      - {name: outflow_total, type: numeric}
+  branch_customer_counts:
+    table: analytics.branch_customer_counts
+    kind: view
+    note: "aggregate view; small groups suppressed"
+    columns:
+      - {name: branch_id, type: smallint}
+      - {name: branch_name, type: text}
+      - {name: segment, type: text}
+      - {name: customer_count, type: bigint}
+  loan_portfolio_summary:
+    table: analytics.loan_portfolio_summary
+    kind: view
+    note: "aggregate view; small groups suppressed"
+    columns:
+      - {name: branch_id, type: smallint}
+      - {name: branch_name, type: text}
+      - {name: loan_type, type: text}
+      - {name: status, type: text}
+      - {name: loan_count, type: bigint}
+      - {name: outstanding_total, type: numeric}
+  headcount_by_branch:
+    table: analytics.headcount_by_branch
+    kind: view
+    note: "aggregate view of ACTIVE staff; small groups suppressed"
+    columns:
+      - {name: branch_id, type: smallint}
+      - {name: branch_name, type: text}
+      - {name: department, type: text}
+      - {name: headcount, type: bigint}
+
+# Per role: which entities, how many rows (all | own_branch | aggregate_only), and raw columns withheld
+# (the *_masked column is the allowed form). own_branch on salary means: only staff of the caller's branch.
+permissions:
+  teller:
+    branch: {rows: all}
+    customer: {rows: own_branch}
+    account: {rows: own_branch}
+    transaction: {rows: own_branch}
+  branch_manager:
+    branch: {rows: all}
+    customer: {rows: own_branch}
+    account: {rows: own_branch}
+    transaction: {rows: own_branch}
+    loan: {rows: own_branch}
+    employee: {rows: own_branch}
+    salary: {rows: own_branch}
+  hr:
+    branch: {rows: all}
+    employee: {rows: all}
+    salary: {rows: all}
+  auditor:
+    branch: {rows: all}
+    customer: {rows: all, deny_columns: [national_id, phone]}
+    account: {rows: all, deny_columns: [account_number]}
+    transaction: {rows: all}
+    loan: {rows: all}
+    employee: {rows: all, deny_columns: [phone]}
+    salary: {rows: all}
+    branch_monthly_flows: {rows: aggregate_only}
+    branch_customer_counts: {rows: aggregate_only}
+    loan_portfolio_summary: {rows: aggregate_only}
+    headcount_by_branch: {rows: aggregate_only}
+  intern:
+    branch: {rows: all}
+    branch_monthly_flows: {rows: aggregate_only}
+    branch_customer_counts: {rows: aggregate_only}
+    loan_portfolio_summary: {rows: aggregate_only}
+    headcount_by_branch: {rows: aggregate_only}
+
+# Business vocabulary shown to the model only in "semantic" mode (the with-ontology arm of the stage-2 eval).
+terms:
+  overdue loan: "loans.status = 'overdue' (1-90 days past due). NPA loans (status 'npa', over 90 days) are separate and NOT included."
+  NPA: "non-performing asset: loans.status = 'npa'."
+  dormant account: "accounts.status = 'dormant' (no activity for a long time)."
+  expired KYC: "customers.kyc_status = 'expired'."
+  net inflow: "(deposit + transfer_in) minus (withdrawal + transfer_out) amounts; fee and interest are excluded."
+  current salary: "the salaries row with the latest effective_from for that employee."
+  active staff: "employees.status = 'active'."
+  head office: "employees with branch_id NULL."
+  last month / last quarter: "calendar periods before the dataset date, not rolling windows."

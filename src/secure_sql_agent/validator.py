@@ -16,21 +16,12 @@ from dataclasses import dataclass
 import sqlglot
 from sqlglot import exp
 
+from . import ontology
+
 MAX_SQL_CHARS = 4000
 
-TABLES: dict[str, set[str]] = {
-    "teller": {"bank.branches", "bank.customers", "bank.accounts", "bank.transactions"},
-    "branch_manager": {"bank.branches", "bank.customers", "bank.accounts", "bank.transactions", "bank.loans",
-                       "bank.employees", "bank.salaries"},
-    "hr": {"bank.branches", "bank.employees", "bank.salaries"},
-    "auditor": {"bank.branches", "bank.customers", "bank.accounts", "bank.transactions", "bank.loans",
-                "bank.employees", "bank.salaries", "analytics.branch_monthly_flows",
-                "analytics.branch_customer_counts", "analytics.loan_portfolio_summary",
-                "analytics.headcount_by_branch"},
-    "intern": {"bank.branches", "analytics.branch_monthly_flows", "analytics.branch_customer_counts",
-               "analytics.loan_portfolio_summary", "analytics.headcount_by_branch"},
-}
-DENIED_COLUMNS: dict[str, set[str]] = {"auditor": {"national_id", "phone", "account_number"}}
+TABLES = ontology.tables_by_role()            # derived from ontology/bank.yaml
+DENIED_COLUMNS = ontology.denied_columns()
 
 ALLOWED_NODES = tuple(getattr(exp, n) for n in """
 Select Subquery With CTE Union Intersect Except Table TableAlias Alias Column Identifier Star Literal Boolean Null
