@@ -41,7 +41,7 @@ def test_every_status_has_an_example():
     statuses = {
         json.loads(p.read_text())["status"] for p in EXAMPLES if p.name.startswith("response.")
     }
-    assert statuses == {"answered", "refused", "needs_review", "error"}
+    assert statuses == {"answered", "refused", "needs_review", "needs_clarification", "error"}
 
 
 def test_request_rejects_unknown_fields():
@@ -56,6 +56,15 @@ def test_response_tolerates_additive_fields():
     data["some_future_field"] = 1
     RESP.validate(data)
     QueryResponse.model_validate(data)
+
+
+def test_status_enum_matches_model():
+    from typing import get_args
+
+    from secure_sql_agent.contracts import Status
+
+    schema_statuses = set(SCHEMA["$defs"]["QueryResponse"]["properties"]["status"]["enum"])
+    assert schema_statuses == set(get_args(Status))
 
 
 def test_required_fields_match_between_schema_and_model():

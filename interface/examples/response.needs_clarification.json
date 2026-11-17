@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "status": "needs_clarification",
+  "columns": [],
+  "rows": [],
+  "row_count": 0,
+  "truncated": false,
+  "sql": null,
+  "explanation": "Which balance do you mean: the current balance of each account, or the total across all accounts at your branch?",
+  "confidence": {
+    "router": 0.41,
+    "validator": null
+  },
+  "policy_hits": [
+    {
+      "policy_id": "router.ambiguous_question",
+      "stage": "router",
+      "action": "flag",
+      "detail": "'balance' maps to more than one metric"
+    }
+  ],
+  "review_id": null,
+  "error": null,
+  "trace_id": "tr_9c2e10"
+}

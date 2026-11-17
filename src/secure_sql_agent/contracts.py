@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 SCHEMA_VERSION = "1"
 
-Status = Literal["answered", "refused", "needs_review", "error"]
+Status = Literal["answered", "refused", "needs_review", "needs_clarification", "error"]
 Stage = Literal["identity", "input_guard", "router", "validator", "database", "output_guard"]
 Action = Literal["block", "mask", "flag", "review", "cap"]
 ErrorCode = Literal[

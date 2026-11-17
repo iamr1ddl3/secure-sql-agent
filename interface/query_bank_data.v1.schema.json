@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/aiagentslab/secure-sql-agent/interface/query_bank_data.v1.schema.json",
+  "$id": "https://github.com/iamr1ddl3/secure-sql-agent/interface/query_bank_data.v1.schema.json",
   "title": "query_bank_data v1",
   "description": "Contract for the Secure SQL Agent. Exposed as the MCP tool `query_bank_data` and as FastAPI `POST /v1/query`. Version rule: adding an optional field is a minor change; renaming or removing a field, or adding a required request field, needs v2.",
   "$defs": {
@@ -92,9 +92,10 @@
             "answered",
             "refused",
             "needs_review",
+            "needs_clarification",
             "error"
           ],
-          "description": "answered: rows are returned. refused: a guardrail or the database denied the request. needs_review: parked for human approval. error: something failed; nothing was returned."
+          "description": "answered: rows are returned. refused: a guardrail or the database denied the request. needs_review: parked for human approval. needs_clarification: the question is ambiguous; nothing ran, and `explanation` asks the user what they meant. error: something failed; nothing was returned."
         },
         "columns": {
           "type": "array",
