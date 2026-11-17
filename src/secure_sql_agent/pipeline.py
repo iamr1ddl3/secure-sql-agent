@@ -18,6 +18,7 @@ import psycopg
 from langgraph.graph import END, StateGraph
 
 from . import db, input_guard, output_guard
+from .review import ReviewStore, needs_review
 from .scope_guard import other_branch_named
 from .contracts import ErrorInfo, PolicyHit, QueryResponse
 from .llm import LLM, LLMError
@@ -98,6 +99,7 @@ class Pipeline:
     as_of: str = "2026-11-01"
     statement_timeout_ms: int = 5000
     owns_conn: bool = True   # False when the caller shares one connection (the eval harness)
+    reviews: ReviewStore | None = None   # human approval queue for bulk raw-PII results
     guards: bool = True      # False = ablation for the eval: skip input guard, scope guard and router (validator + database stay)
     _graph: object = field(init=False, default=None)
 
@@ -213,9 +215,30 @@ class Pipeline:
                             ErrorInfo(code="db_error" if kind == "database.error" else "generation_failed", message=s["error"][:500]))
             return resp("refused", "This question needs data your role is not allowed to access.", hits)
         r = s["result"]
+        if self.reviews is not None and needs_review([c[0] for c in r.columns], len(r.rows)):
+            rid = self.reviews.create(sub, r.app_role, question, s["validated"], max_rows)
+            return resp("needs_review", "This returns raw personal identifiers in bulk, so a second person must approve it first.",
+                        hits + [PolicyHit(policy_id="review.bulk_pii", stage="output_guard", action="review",
+                                          detail=f"{len(r.rows)} rows with raw identifiers held for approval")],
+                        review_id=rid, sql=s["validated"])
         cols, rows, truncated, out_hits = output_guard.guard(r.app_role, r.columns, r.rows, max_rows)
         return resp("answered", f"Returned {len(rows)} row(s) from {', '.join(validate(s['sql'], role).tables)}.", hits + out_hits,
                     columns=cols, rows=rows, row_count=len(rows), truncated=truncated or r.truncated, sql=s["validated"])
+
+    def run_approved(self, review, trace_id: str) -> QueryResponse:
+        """Re-run an approved review's SQL AS THE REQUESTER; the database still decides what comes back."""
+        conn = self.conn_factory()
+        try:
+            r = db.run_as_user(conn, uuid.UUID(review["requester"]), review["sql"], key_id=self.key_id, secret=self.secret,
+                               row_cap=review["max_rows"], statement_timeout_ms=self.statement_timeout_ms)
+        finally:
+            if self.owns_conn:
+                conn.close()
+        cols, rows, truncated, out_hits = output_guard.guard(r.app_role, r.columns, r.rows, review["max_rows"])
+        return QueryResponse(status="answered", explanation=f"Approved by a reviewer; {len(rows)} row(s).", columns=cols, rows=rows,
+                             row_count=len(rows), truncated=truncated or r.truncated, sql=review["sql"], trace_id=trace_id,
+                             policy_hits=out_hits + [PolicyHit(policy_id="review.approved", stage="output_guard", action="review",
+                                                               detail=review["id"])])
 
     def _scope(self, conn, sub: uuid.UUID) -> tuple[int | None, list[tuple]]:
         """Caller's own branch id and the branch directory (readable by every staff role). Trusted internal SQL."""
