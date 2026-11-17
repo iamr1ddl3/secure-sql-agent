@@ -18,6 +18,7 @@ import psycopg
 from langgraph.graph import END, StateGraph
 
 from . import db, input_guard, output_guard
+from .scope_guard import other_branch_named
 from .contracts import ErrorInfo, PolicyHit, QueryResponse
 from .llm import LLM, LLMError
 from .schema_context import schema_for
@@ -97,6 +98,7 @@ class Pipeline:
     as_of: str = "2026-11-01"
     statement_timeout_ms: int = 5000
     owns_conn: bool = True   # False when the caller shares one connection (the eval harness)
+    guards: bool = True      # False = ablation for the eval: skip input guard, scope guard and router (validator + database stay)
     _graph: object = field(init=False, default=None)
 
     def __post_init__(self):
@@ -171,7 +173,7 @@ class Pipeline:
             return QueryResponse(status=status, explanation=explanation[:500], policy_hits=list(hits), error=error,
                                  trace_id=trace_id, **kw)
 
-        v = input_guard.check(question)
+        v = input_guard.check(question) if self.guards else input_guard.Verdict(True)
         if not v.allowed:
             return resp("refused", "This question was blocked by the input check.",
                         [PolicyHit(policy_id=v.policy_id, stage="input_guard", action="block", detail=v.detail)])
@@ -179,8 +181,15 @@ class Pipeline:
             role = db.role_of(conn, sub, key_id=self.key_id, secret=self.secret)
         except db.NotStaffError:
             return resp("error", "The identity is not an active staff user.", error=ErrorInfo(code="invalid_identity", message="not staff"))
+        if self.guards and role in ("teller", "branch_manager"):
+            own, branches = self._scope(conn, sub)
+            other = other_branch_named(question, own, branches) if own else None
+            if other:
+                mine = next(b[2] for b in branches if b[0] == own)
+                return resp("refused", f"You can only see data for your own branch ({mine}); {other[2]} is outside your access.",
+                            [PolicyHit(policy_id="scope.other_branch", stage="input_guard", action="block", detail=f"asked about {other[1]}")])
         try:
-            label, message = self._route(question, role, usage)
+            label, message = self._route(question, role, usage) if self.guards else ("answerable", "")
         except LLMError as e:
             return resp("error", "The question could not be classified.", error=ErrorInfo(code="generation_failed", message=str(e)[:500]))
         if label != "answerable":
@@ -207,6 +216,13 @@ class Pipeline:
         cols, rows, truncated, out_hits = output_guard.guard(r.app_role, r.columns, r.rows, max_rows)
         return resp("answered", f"Returned {len(rows)} row(s) from {', '.join(validate(s['sql'], role).tables)}.", hits + out_hits,
                     columns=cols, rows=rows, row_count=len(rows), truncated=truncated or r.truncated, sql=s["validated"])
+
+    def _scope(self, conn, sub: uuid.UUID) -> tuple[int | None, list[tuple]]:
+        """Caller's own branch id and the branch directory (readable by every staff role). Trusted internal SQL."""
+        r = db.run_as_user(conn, sub, "select app.current_branch(), b.branch_id, b.branch_code, b.name, b.city from bank.branches b",
+                           key_id=self.key_id, secret=self.secret, row_cap=100)
+        own = r.rows[0][0] if r.rows else None
+        return own, [tuple(x[1:]) for x in r.rows]
 
     def _route(self, question: str, role: str, usage: Usage) -> tuple[str, str]:
         tables = "\n".join(f"- {t}" for t in sorted(TABLES[role]))

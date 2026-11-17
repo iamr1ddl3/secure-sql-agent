@@ -38,13 +38,15 @@ def token(asked_by: str) -> str:
 
 
 def main() -> int:
-    items = load_items(sys.argv[1:])
+    args = sys.argv[1:]
+    guards = "--guards-off" not in args  # ablation: input guard + scope guard + router off (validator and DB stay on)
+    items = load_items([a for a in args if not a.startswith("--")])
     results, latencies, costs = [], [], []
     with connections() as (admin, agent, secret):
         live = bool(os.environ.get("OPENROUTER_API_KEY"))
         if live:  # real pipeline: shared agent connection, the eval's temporary signing key
             from secure_sql_agent.service import build_pipeline
-            pipeline = build_pipeline(lambda: agent, owns_conn=False, key_id=KEY_ID, secret=secret)
+            pipeline = build_pipeline(lambda: agent, owns_conn=False, key_id=KEY_ID, secret=secret, guards=guards)
         else:
             print("WARNING: OPENROUTER_API_KEY not set; scoring the stub pipeline (every item will fail)")
             pipeline = None
@@ -61,12 +63,17 @@ def main() -> int:
                 costs.append(usage["cost_usd"])
     summary = summarize(results, latencies, costs)
     summary["pipeline"] = "live" if live else "stub"
+    summary["guards"] = "on" if guards else "off"
     report = {"at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "summary": summary, "results": results}
     out = ROOT / "reports"
     out.mkdir(exist_ok=True)
     text = json.dumps(report, indent=2)
-    (out / "eval_latest.json").write_text(text)
-    (out / f"eval_{report['at'].replace(':', '').replace('-', '')}.json").write_text(text)
+    stamp = report["at"].replace(":", "").replace("-", "")
+    if guards:  # eval_latest.json is what the CI gate reads; the ablation run must not overwrite it
+        (out / "eval_latest.json").write_text(text)
+    else:
+        (out / "eval_guards_off.json").write_text(text)
+    (out / f"eval_{stamp}{'' if guards else '_guards_off'}.json").write_text(text)
     print(json.dumps(summary, indent=2))
     return 0
 

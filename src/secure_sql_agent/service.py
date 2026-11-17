@@ -48,7 +48,8 @@ def build_service() -> QueryService:
     return QueryService(verifier, build_pipeline() if s.openrouter_api_key else None)
 
 
-def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None = None, secret: bytes | None = None):
+def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None = None, secret: bytes | None = None,
+                   guards: bool = True):
     """Pipeline from settings + config/models.yaml (router = `cheap`, SQL = `default_model`). Needs OPENROUTER_API_KEY."""
     import psycopg
 
@@ -63,5 +64,5 @@ def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None
                           d.get("temperature", 0), d.get("max_tokens", 1200))
     return Pipeline(router=mk("cheap"), sql_llm=mk(s.default_model),
                     conn_factory=conn_factory or (lambda: psycopg.connect(s.agent_database_url)),
-                    key_id=key_id or s.identity_hmac_key_id, secret=secret or s.identity_hmac_key.encode(), owns_conn=owns_conn,
+                    key_id=key_id or s.identity_hmac_key_id, secret=secret or s.identity_hmac_key.encode(), owns_conn=owns_conn, guards=guards,
                     statement_timeout_ms=s.statement_timeout_ms)
