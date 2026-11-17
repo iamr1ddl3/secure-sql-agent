@@ -48,9 +48,15 @@ jobs:
           sys.exit(1 if r["leaked_rows_total"] else 0)
           PY
 
+      - name: Eval on the golden set
+        run: python evals/run_eval.py
+
+      - name: Gate - execution accuracy must not drop more than 2 points vs evals/baseline.json
+        run: python evals/gate.py
+
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: reports, path: reports/ }
 
-  # eval-gate: added in stage 1 once the golden set exists. Fails the PR if execution
-  # accuracy drops > 2 points vs main, or any permission test leaks a row.
+  # ponytail: the eval runs in this job. Once the pipeline calls OpenRouter, move it to its own job with the
+  # OPENROUTER_API_KEY secret and a cost cap (every PR spends tokens).

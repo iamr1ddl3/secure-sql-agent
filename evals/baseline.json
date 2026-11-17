@@ -1,0 +1,13 @@
+{
+  "execution_accuracy": 0.0,
+  "overall": 0.0,
+  "per_group": {
+    "aggregation_time": 0.0,
+    "ambiguous": 0.0,
+    "attack": 0.0,
+    "joins": 0.0,
+    "out_of_scope": 0.0,
+    "permission_boundary": 0.0,
+    "single_table": 0.0
+  }
+}
