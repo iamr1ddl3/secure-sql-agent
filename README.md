@@ -7,6 +7,8 @@ is gated by evals in CI.
 > Part 1 of 2. Part 2 (Secure Multi-Agent Delegation) calls this agent as a specialist and proves the
 > security still holds when an agent is the caller. *(link once the repo exists)*
 
+![A fooled assistant can only open what the asker could open](docs/images/master-key-vs-key-card.png)
+
 ## Results
 
 | Metric | Value |
@@ -24,15 +26,29 @@ Numbers are only ever filled in from `reports/` produced by CI.
 
 ## How access is enforced
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor U as Staff user
+    participant S as Agent service
+    participant DB as Postgres (Supabase)
+    U->>S: question + login token (JWT)
+    S->>S: verify JWT signature, reject service/anon tokens
+    S->>DB: connect as sql_agent_login (no grants, read-only, 5 s timeout)
+    S->>DB: app.txn_binding()
+    DB-->>S: backend pid + transaction start
+    S->>DB: set claims {sub, HMAC(sub, pid, start)}
+    S->>DB: app.whoami() reads role from app.staff_users
+    S->>DB: SET LOCAL ROLE bank_(user role)
+    S->>DB: validated SELECT
+    Note over DB: grants = table/column allowlist<br/>RLS = rows, checks pg role AND verified app role<br/>bad signature = no user = 0 rows
+    DB-->>S: only the rows this user may see
+    S-->>U: masked answer + the SQL that ran
 ```
-JWT ─► verify (Supabase JWKS) ─► sub
-                                   │  service never takes a role from the prompt or caller
-login as sql_agent_login (NOINHERIT, no grants, read-only, 5 s timeout)
-   ├─ set request.jwt.claims = {sub, HMAC(sub, backend pid, txn start)}
-   ├─ app.whoami() → role from app.staff_users
-   ├─ SET LOCAL ROLE bank_<role>      ← grants = table/column allowlist
-   └─ run validated SELECT            ← RLS filters rows; policies check pg role AND verified app role
-```
+
+Inside the database every query passes three locks:
+
+![Every query passes three locks inside the database](docs/images/three-locks.png)
 
 | Role | Sees | Never sees |
 | --- | --- | --- |
@@ -46,6 +62,47 @@ Why the HMAC: `request.jwt.claims` is just a session setting, and SQL can overwr
 `set_config()`. Binding it to the transaction with a key the database checks means a forged or
 replayed claim resolves to *no user*, and every policy returns zero rows. Details:
 [`docs/decisions.md`](docs/decisions.md).
+
+## How a question is answered
+
+Only one step can see data, and it runs as the logged-in user. Status: the database locks (step 6) are
+built and tested; the other steps are being built next, each behind an eval.
+
+```mermaid
+flowchart LR
+    Q([Question]) --> IG[1 Input guard]
+    IG --> RT[2 Router]
+    RT --> SL[3 Schema linking]
+    SL --> GEN[4 SQL generation<br/>1 repair max]
+    GEN --> VAL[5 SQL validator<br/>sqlglot]
+    VAL --> EX[[6 Execute as user<br/>roles + RLS]]
+    EX --> OG[7 Output guard<br/>mask PII, cap rows]
+    OG --> A([Answer + SQL + trace id])
+    IG -. refused .-> STOP([refused / needs_review])
+    RT -. refused or review .-> STOP
+    VAL -. refused .-> STOP
+    classDef built fill:#dbeafe,stroke:#2563eb,stroke-width:2px
+    class EX built
+```
+
+Prompt injection is handled in layers; only the database layer can't be talked round, so that is where
+leaks are counted:
+
+![Five layers stop tricks; only the database can't be talked round](docs/images/defence-in-depth.png)
+
+## Release gate
+
+```mermaid
+flowchart LR
+    PR([Pull request]) --> DB[Fresh Postgres<br/>migrations + seed]
+    DB --> PT[Permission + attack tests]
+    PT --> L{0 leaked rows?}
+    L -- no --> BLK([Merge blocked])
+    L -- yes --> EV["Accuracy eval (next)"]
+    EV --> D{Drop ≤ 2 points?}
+    D -- no --> BLK
+    D -- yes --> OK([Merge allowed])
+```
 
 ## Interface (frozen v1)
 
