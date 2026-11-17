@@ -11,18 +11,31 @@ is gated by evals in CI.
 
 ## Results
 
+Golden set: 150 questions in 7 groups, run end to end against hosted Supabase as the 7 demo identities. SQL model
+Claude Sonnet 5.5, router Claude Haiku 5.5, both via OpenRouter. Raw reports: [`docs/results/`](docs/results/).
+
 | Metric | Value |
 | --- | --- |
 | RLS leak count on permission tests | **0** across 47 checks (incl. 10 attack cases that assume the validator is bypassed) |
-| Execution accuracy, overall / per group | not yet measured (stage 1) |
-| Attack success rate by type, before → after guardrails | not yet measured |
-| False-block rate on benign questions | not yet measured |
-| p50 / p95 latency | not yet measured |
-| Cost per 1,000 queries per model | not yet measured |
-| Ontology gain (stage 2) | not yet measured |
-| Router comparison (stage 3) | not yet measured |
+| Execution accuracy, overall | **98.9%** (item pass rate 97.3%) |
+| Per group (item pass rate) | single table 100% · joins 95% · aggregation + time 100% · ambiguous 87% · out of scope 100% · permission boundary 97% · attack 100% |
+| Attack success by type, guards off → on | direct injection 17% → **0%** · SQL in the question 60% → **0%** · system-prompt extraction 0% → 0% · injection hidden in data 0% → 0% |
+| False-block rate on benign questions | **0%** (guards on) |
+| p50 / p95 latency | **3.1 s / 5.2 s** (two model calls per question) |
+| Cost per 1,000 queries | Sonnet 5.5 **$2.46** (97.9%) · Haiku 5.5 **$0.23** (96.8%) · gpt-5-mini $0.91 (88.3%, p95 16 s) · qwen3-coder $0.23 (75.5%, 6.7% false blocks) |
+| Ontology gain (stage 2) | **+3.2 points** (Sonnet) and **+1.1** (Haiku), within run-to-run noise; +14% to +32% prompt cost |
+| Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev: not yet run |
 
-Numbers are only ever filled in from `reports/` produced by CI.
+How to read these honestly:
+
+- "Attack success" means the agent answered with rows when it should have refused. Rows leaked **beyond a role's permission** are
+  0 in every mode, because the database enforces that regardless of what the model does.
+- The golden set is not yet human-reviewed, and the prompt and input-guard patterns were tuned while looking at it, so treat the
+  accuracy numbers as an upper bound. The regex router scored 98.7% on the golden set and 32.5% on unseen questions: that gap is
+  the lesson. See [`docs/what-did-not-work.md`](docs/what-did-not-work.md).
+- One run per configuration; differences under about 2 points are noise.
+- These come from local runs (CI has no model key yet, so its eval step is skipped). Reproduce with
+  `python evals/run_eval.py`, `--guards-off`, `--semantic`, and `python evals/run_router_eval.py [--heldout]`.
 
 ## How access is enforced
 
@@ -65,8 +78,8 @@ replayed claim resolves to *no user*, and every policy returns zero rows. Detail
 
 ## How a question is answered
 
-Only one step can see data, and it runs as the logged-in user. Status: the database locks (step 6) are
-built and tested; the other steps are being built next, each behind an eval.
+Only one step can see data, and it runs as the logged-in user. All seven steps are built and measured; a bulk export
+of raw identifiers is held for a second person to approve (`needs_review`).
 
 ```mermaid
 flowchart LR

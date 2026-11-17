@@ -1,0 +1,45 @@
+[
+  {
+    "router": "rules",
+    "n": 40,
+    "accuracy": 0.325,
+    "recall_by_class": {
+      "ambiguous": 0.0,
+      "answerable": 1.0,
+      "out_of_scope": 0.1,
+      "unsafe": 0.2
+    },
+    "errors": 0,
+    "latency_ms": {
+      "p50": 0.01,
+      "p95": 0.02
+    },
+    "cost_per_1000_decisions_usd": 0.0,
+    "confusion": {
+      "ambiguous->answerable": 10,
+      "out_of_scope->answerable": 9,
+      "unsafe->answerable": 8
+    }
+  },
+  {
+    "router": "small_llm",
+    "n": 40,
+    "accuracy": 0.95,
+    "recall_by_class": {
+      "ambiguous": 1.0,
+      "answerable": 0.9,
+      "out_of_scope": 0.9,
+      "unsafe": 1.0
+    },
+    "errors": 0,
+    "latency_ms": {
+      "p50": 1303.79,
+      "p95": 1710.29
+    },
+    "cost_per_1000_decisions_usd": 0.0766,
+    "confusion": {
+      "answerable->ambiguous": 1,
+      "out_of_scope->answerable": 1
+    }
+  }
+]
