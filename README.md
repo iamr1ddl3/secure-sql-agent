@@ -104,6 +104,28 @@ flowchart LR
     D -- yes --> OK([Merge allowed])
 ```
 
+## Why this stack
+
+Every choice serves one goal: access enforced by something that can't be persuaded, proven by tests,
+at close to zero cost. The database came first because it holds the locks; the rest fits around it.
+
+![The stack is built around the database that holds the locks](docs/images/tech-stack.png)
+
+| Choice | Why | Alternatives passed on | Trade-off accepted |
+| --- | --- | --- | --- |
+| **PostgreSQL** | Roles, column grants and row-level security are built in, so the locks live in the database; standard SQL; identical locally, in CI and in the cloud | MySQL/MariaDB (no native RLS, back to filtering in app code); SQL Server/Oracle (have RLS, but licensing and no free hosted auth); Snowflake/BigQuery/Databricks (row filters exist, but paid and hard to test locally; the design maps onto Unity Catalog row filters and column masks); SQLite (no roles) | Locks use Postgres-specific features, so not portable unchanged; small per-query cost for RLS, kept low by evaluating checks once per query |
+| **Supabase** | Postgres + signed logins (JWT) + connection pooler in one free project; plain Postgres underneath, so the same migrations run in CI | Postgres in Docker (no hosted auth, nothing to demo; still used in CI); RDS/Cloud SQL (paid, no bundled auth); Neon (no bundled auth) | Free plan [pauses after ~1 week of low activity](https://supabase.com/docs/guides/platform/free-project-pausing); session-pooler and migration-versioning specifics; data in the cloud (fine: synthetic) |
+| **Python + FastAPI + MCP** | AI tooling is Python-first; FastAPI validates every request against the frozen contract; MCP is the standard door for agents, which is how Part 2 calls this service | Go/Rust (faster, thinner AI ecosystem) | Two transports to maintain, kept thin so security lives in one shared service |
+| **LangGraph** | Explicit steps with hard limits (one SQL repair) and saved state, which Part 2 needs for durable runs | Plain Python (too bare for Part 2); CrewAI/AutoGen (less control over limits) | One more framework to learn and keep current |
+| **sqlglot** | A real parser checks structure (one statement, read-only, allowed tables) instead of guessing with patterns | Regex (easy to fool); Postgres parser bindings (exact, heavier) | May read a rare edge case differently from Postgres, which is why the database stays the final lock |
+| **OpenRouter** | One API for Claude and cheaper challengers, so accuracy, latency and cost are measured the same way; model swaps are one-line | Each vendor's API directly | [Fee on credit purchases](https://openrouter.ai/docs/faq) (no per-token markup), an extra network hop, another party in the request path (fine: synthetic data) |
+| **pytest + DeepEval** | Standard tests; judge-based scores only where exact comparison can't decide | Hand-rolled scripts | Judge calls cost money and vary, so execution accuracy stays the primary score |
+| **GitHub Actions** | Free for public repos; every change re-runs the leak gate in public | Other CI services | CI runs Postgres 16, Supabase runs 17; both are tested |
+| **Langfuse** | Open-source, self-hostable, framework-neutral step traces | LangSmith (closer to the LangChain ecosystem and its paid tiers) | One more service to run |
+
+Deliberately left out: Neo4j for the ontology until graph queries are needed, Jev as the default router
+unless it wins on our data, semantic caching, fine-tuning, and any writes to the database.
+
 ## Interface (frozen v1)
 
 MCP tool `query_bank_data` and `POST /v1/query`, both defined by
