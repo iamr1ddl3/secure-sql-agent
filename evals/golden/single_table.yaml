@@ -61,10 +61,10 @@
 - id: st-08
   group: single_table
   asked_by: manager.surat
-  question: List the loans at my branch that are more than 90 days past due, with the outstanding amount.
+  question: List the loans at my branch that are more than 90 days past due. Show the loan ID and outstanding amount.
   expect: answered
   reference_sql: |
-    select loan_id, customer_id, outstanding, days_past_due
+    select loan_id, outstanding
       from bank.loans where branch_id = 1 and days_past_due > 90
   reviewed: false
 

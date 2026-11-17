@@ -27,7 +27,7 @@
 - id: jn-03
   group: joins
   asked_by: teller.surat
-  question: Who are the top 5 customers at my branch by total balance across all their accounts?
+  question: Who are the top 5 customers at my branch by total balance across all their accounts? Show ID, name and total balance.
   expect: answered
   order_matters: true
   reference_sql: |
@@ -55,10 +55,10 @@
 - id: jn-05
   group: joins
   asked_by: manager.surat
-  question: Which customers at my branch have an overdue loan? Show the customer name and the outstanding amount.
+  question: Which customers at my branch have an overdue loan? Show the customer name and the outstanding amount of each overdue loan.
   expect: answered
   reference_sql: |
-    select c.customer_id, c.full_name, l.loan_id, l.outstanding
+    select c.full_name, l.outstanding
       from bank.loans l join bank.customers c on c.customer_id = l.customer_id
      where l.branch_id = 1 and l.status = 'overdue'
   reviewed: false
@@ -78,7 +78,7 @@
 - id: jn-07
   group: joins
   asked_by: manager.mumbai
-  question: List the active staff at my branch with their job title and current annual CTC.
+  question: "List the active staff at my branch: ID, name, job title and current annual CTC."
   expect: answered
   reference_sql: |
     select e.employee_id, e.full_name, e.job_title, s.annual_ctc
@@ -105,7 +105,7 @@
   question: For customers at my branch with an NPA loan, give me their name and phone number.
   expect: answered
   reference_sql: |
-    select distinct c.customer_id, c.full_name, c.phone
+    select distinct c.full_name, c.phone
       from bank.loans l join bank.customers c on c.customer_id = l.customer_id
      where l.branch_id = 1 and l.status = 'npa'
   reviewed: false
@@ -113,7 +113,7 @@
 - id: jn-10
   group: joins
   asked_by: hr.officer
-  question: List everyone in the HR department with the name of their branch (say Head Office if they have none).
+  question: "List everyone in the HR department: ID, name and branch name (say Head Office if they have none)."
   expect: answered
   reference_sql: |
     select e.employee_id, e.full_name, coalesce(b.name, 'Head Office')
@@ -124,7 +124,7 @@
 - id: jn-11
   group: joins
   asked_by: hr.officer
-  question: Show the current annual CTC of every active Branch Manager along with their branch name.
+  question: For every active Branch Manager show ID, name, branch name and current annual CTC.
   expect: answered
   reference_sql: |
     select e.employee_id, e.full_name, b.name, s.annual_ctc

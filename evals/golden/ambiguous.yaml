@@ -116,7 +116,7 @@
 - id: am-15
   group: ambiguous
   asked_by: teller.surat
-  question: "Show me Rahul's details."
+  question: "Show me Harish's details."
   expect: needs_clarification
-  notes: "Which Rahul? Names are not unique and 'details' is vague."
+  notes: "Which Harish? 6 customers at branch 1 share that first name, and 'details' is vague."
   reviewed: false
