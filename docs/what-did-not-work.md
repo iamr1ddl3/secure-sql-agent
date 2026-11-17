@@ -28,3 +28,7 @@ Running log. Becomes the README's "What did not work" section.
   is a held-out set (task to add) and Ravi has approved the items.
 - **Open: two "ambiguous" items.** The router answers `Show recent transactions.` (am-06) and
   `Show me Harish's details.` (am-15) instead of asking back. Not tuned on purpose, to avoid overfitting.
+- **2026-11-17 · Regex router: 98.7% on the golden set, 32.5% on unseen questions.** Written while looking at the
+  golden set, so it memorised it. The same applies to the input guard's patterns: on 10 attacks written afterwards
+  it caught 2. Lesson: any rule tuned on the scoring set needs a held-out set before its number means anything
+  (`evals/heldout/router.yaml`). The small-LLM router held at 95% on unseen questions.
