@@ -109,6 +109,7 @@ def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None
     from .config import get_settings
     from .llm import LLM, load_model_ids
     from .pipeline import Pipeline
+    from .routers import LLMRouter
 
     s = get_settings()
     cfg = load_model_ids(s.models_file)
@@ -117,7 +118,7 @@ def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None
                           d.get("temperature", 0), d.get("max_tokens", 1200))
     from .review import ReviewStore
 
-    return Pipeline(router=mk("cheap"), sql_llm=mk(s.default_model), reviews=ReviewStore(),
+    return Pipeline(router=LLMRouter(mk("cheap")), sql_llm=mk(s.default_model), reviews=ReviewStore(),
                     conn_factory=conn_factory or (lambda: psycopg.connect(s.agent_database_url)),
                     key_id=key_id or s.identity_hmac_key_id, secret=secret or s.identity_hmac_key.encode(), owns_conn=owns_conn, guards=guards, semantic=semantic,
                     statement_timeout_ms=s.statement_timeout_ms)

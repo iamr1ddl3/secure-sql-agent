@@ -14,7 +14,7 @@ class FakeLLM:
 
 
 def pipe(text):
-    return Pipeline(router=FakeLLM("{}"), sql_llm=FakeLLM(text), conn_factory=lambda: None, key_id="k", secret=b"s")
+    return Pipeline(router=None, sql_llm=FakeLLM(text), conn_factory=lambda: None, key_id="k", secret=b"s")
 
 
 def state(role="hr"):
