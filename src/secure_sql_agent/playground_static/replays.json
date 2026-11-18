@@ -3909,43 +3909,6 @@
     "status": "denied",
     "error": "permission denied for table transactions"
    }
-  },
-  "staff_users": {
-   "teller.surat": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "teller.mumbai": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "manager.surat": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "manager.mumbai": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "hr.officer": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "auditor": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   },
-   "intern": {
-    "sql": "select * from app.staff_users limit 5",
-    "status": "denied",
-    "error": "permission denied for table staff_users"
-   }
   }
  }
 }

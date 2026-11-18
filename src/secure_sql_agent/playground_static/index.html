@@ -8,218 +8,207 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
   :root { --navy:#0d1b2a; --panel:#13263a; --line:#24405c; --amber:#fca311; --text:#e8edf2; --muted:#8fa3b8;
-          --ok:#4cc38a; --bad:#ef5b5b; --warn:#fca311; }
+          --ok:#4cc38a; --bad:#ef5b5b; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--navy); color:var(--text); font:15px/1.5 Montserrat, system-ui, sans-serif; }
-  main { max-width:1200px; margin:0 auto; padding:28px 20px 60px; }
-  h1 { font-weight:800; font-size:28px; margin:0; } h1 b { color:var(--amber); }
-  h2 { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:26px 0 10px; }
-  .sub { color:var(--muted); margin:6px 0 0; }
-  code, pre, .mono { font-family:"IBM Plex Mono", monospace; }
-  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--text);
-           border-radius:8px; padding:7px 12px; }
+  body { margin:0; background:var(--navy); color:var(--text); font:16px/1.5 Montserrat, system-ui, sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 140px; }
+  h1 { font-weight:800; font-size:26px; margin:0 0 4px; } h1 b { color:var(--amber); }
+  .sub { color:var(--muted); margin:0 0 18px; }
+  .steps { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; margin-bottom:18px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-size:14px; }
+  .step b { color:var(--amber); display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+  h2 { font-size:15px; margin:18px 0 8px; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:10px; }
   button:hover { border-color:var(--amber); }
-  button.on { background:var(--amber); color:var(--navy); border-color:var(--amber); font-weight:600; }
   button:disabled { opacity:.5; cursor:wait; }
-  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-  .chip { font-size:13px; text-align:left; }
-  .chip.attack { border-color:#5c2a2a; }
-  .chip.attack::before { content:"⚠ "; color:var(--bad); }
-  textarea { width:100%; min-height:62px; resize:vertical; background:var(--panel); color:var(--text); border:1px solid var(--line);
-             border-radius:8px; padding:10px; font:inherit; }
-  select { font:inherit; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:16px; margin-top:16px; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; overflow:hidden; }
-  .who { font-weight:800; } .who small { color:var(--muted); font-weight:400; }
-  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 9px; border-radius:99px; margin-left:8px; }
-  .answered { background:#173d2c; color:var(--ok); } .refused, .denied, .error { background:#3d1717; color:var(--bad); }
-  .needs_clarification, .needs_review { background:#3d2e10; color:var(--warn); } .ok { background:#173d2c; color:var(--ok); }
-  .expl { margin:10px 0; }
-  pre { background:#0a1622; border:1px solid var(--line); border-radius:8px; padding:10px; white-space:pre-wrap; font-size:12.5px; margin:8px 0; }
-  .trace { list-style:none; padding:0; margin:10px 0; font-size:13px; }
-  .trace li { display:flex; gap:8px; padding:3px 0; border-left:2px solid var(--line); padding-left:10px; }
-  .trace li.hit { border-left-color:var(--amber); }
-  .trace .stage { width:100px; color:var(--muted); flex:none; }
-  .trace .act { font-weight:600; color:var(--amber); }
-  .tbl { overflow:auto; max-height:320px; }
-  table { border-collapse:collapse; font-size:12.5px; width:100%; }
+  .people { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:8px; }
+  .person { text-align:left; padding:10px 12px; }
+  .person .n { font-weight:600; } .person .d { color:var(--muted); font-size:13px; }
+  .person.on { border-color:var(--amber); background:#2a2410; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .chip { font-size:14px; padding:6px 11px; border-radius:99px; }
+  .chip.attack { border-color:#6b3030; }
+  .chip.db { border-color:#3a5a2a; }
+  .chat { margin-top:22px; display:flex; flex-direction:column; gap:12px; }
+  .msg { max-width:88%; padding:12px 14px; border-radius:14px; }
+  .me { align-self:flex-end; background:var(--amber); color:var(--navy); font-weight:600; border-bottom-right-radius:4px; }
+  .me small { display:block; font-weight:400; opacity:.75; font-size:12px; }
+  .bot { align-self:flex-start; background:var(--panel); border:1px solid var(--line); border-bottom-left-radius:4px; width:88%; }
+  .sys { align-self:center; color:var(--muted); font-size:13px; }
+  .verdict { font-weight:800; } .good { color:var(--ok); } .no { color:var(--bad); } .wait { color:var(--amber); }
+  .tbl { overflow:auto; max-height:260px; margin-top:8px; }
+  table { border-collapse:collapse; font-size:13px; width:100%; }
   th, td { border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; white-space:nowrap; }
-  th { color:var(--amber); font-family:"IBM Plex Mono", monospace; font-weight:600; position:sticky; top:0; background:var(--panel); }
-  .muted { color:var(--muted); font-size:13px; }
-  .note { color:var(--muted); font-size:13px; margin-top:8px; }
-  footer { margin-top:40px; color:var(--muted); font-size:13px; } a { color:var(--amber); }
+  th { color:var(--amber); font-weight:600; }
+  details { margin-top:10px; font-size:13px; color:var(--muted); }
+  summary { cursor:pointer; color:var(--amber); }
+  pre { background:#0a1622; border:1px solid var(--line); border-radius:8px; padding:8px; white-space:pre-wrap;
+        font:12.5px "IBM Plex Mono", monospace; color:var(--text); }
+  .trace div { padding:2px 0; } .trace .hit { color:var(--amber); }
+  .again { margin-top:10px; font-size:13px; color:var(--muted); }
+  .again button { font-size:13px; padding:4px 9px; border-radius:99px; margin:3px 4px 0 0; }
+  .bar { position:fixed; left:0; right:0; bottom:0; background:linear-gradient(transparent, var(--navy) 30%); padding:24px 16px 16px; }
+  .bar form { max-width:860px; margin:0 auto; display:flex; gap:8px; }
+  .bar input { flex:1; font:inherit; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--panel); color:var(--text); }
+  .bar button { padding:0 20px; background:var(--amber); color:var(--navy); font-weight:800; border:none; }
+  .who { font-size:13px; color:var(--muted); max-width:860px; margin:0 auto 6px; }
+  .who b { color:var(--amber); }
+  footer { margin-top:30px; color:var(--muted); font-size:13px; } a { color:var(--amber); }
 </style>
 </head>
 <body>
 <main>
-  <h1>Secure SQL Agent: <b>try to break it</b></h1>
-  <p class="sub">A text-to-SQL agent over synthetic bank data. Every query runs as the person asking, so Postgres
-    (roles, column grants, row level security) decides what comes back. Not the model.</p>
+  <h1>A bank AI you can <b>try to break</b></h1>
+  <p class="sub">This assistant answers questions about a made-up bank. It can only show what the person asking is allowed
+    to see, because the database checks every answer. Even if you trick the AI, it can't reveal more.</p>
 
-  <h2>Mode</h2>
-  <div class="row" id="modes">
-    <button data-mode="replay" class="on">Replay: real answers, precomputed</button>
-    <button data-mode="live">Live: calls the real pipeline</button>
+  <div class="steps">
+    <div class="step"><b>Step 1</b>Pick who you are pretending to be.</div>
+    <div class="step"><b>Step 2</b>Tap a suggested question, or type your own at the bottom.</div>
+    <div class="step"><b>Step 3</b>Under any answer, tap another person to see how the same question is answered for them.</div>
   </div>
-  <div class="note" id="modeNote"></div>
 
-  <h2>1. Pick who you are</h2>
-  <div class="row" id="roles"></div>
+  <h2>Step 1 · Who are you?</h2>
+  <div class="people" id="people"></div>
 
-  <h2>2. Ask something (or try to break it)</h2>
-  <div class="row" id="prompts"></div>
-  <p></p>
-  <textarea id="q" maxlength="300" placeholder="Ask a question about the bank's data..."></textarea>
-  <div class="row" style="margin-top:8px">
-    <button id="ask" class="on">Ask</button>
-    <span class="muted">then</span>
-    <select id="other"></select>
-    <button id="askOther">Ask as another role</button>
-    <span class="muted" id="busy"></span>
-  </div>
-  <div class="grid" id="answers"></div>
+  <h2>Step 2 · Try a question</h2>
+  <div class="chips" id="normal"></div>
+  <h2 style="font-size:14px">…or try to trick it</h2>
+  <div class="chips" id="attacks"></div>
+  <h2 style="font-size:14px">…or skip the AI and go straight to the database</h2>
+  <div class="chips" id="direct"></div>
 
-  <h2>3. Skip the AI entirely</h2>
-  <p class="muted">Run a fixed, reviewed SQL statement straight against Postgres as the chosen role: no model, no SQL
-    validator. Even a fully fooled model can't see more than this. (Visitors can't send their own SQL.)</p>
-  <div class="row" id="raws"></div>
-  <div class="grid" id="rawOut"></div>
+  <div class="chat" id="chat"></div>
 
-  <footer>Synthetic data only; the 7 identities are demo staff accounts. Source, eval numbers and design notes:
+  <footer>All data is synthetic; nobody here is real. How it works:
     <a href="https://github.com/iamr1ddl3/secure-sql-agent">github.com/iamr1ddl3/secure-sql-agent</a></footer>
 </main>
+
+<div class="bar">
+  <div class="who">Asking as <b id="whoName"></b></div>
+  <form id="form"><input id="q" maxlength="300" placeholder="Type a question, e.g. How many customers does my branch have?" autocomplete="off">
+    <button id="send">Send</button></form>
+</div>
+
 <script>
-const USERS = {"teller.surat":"Teller, Surat", "teller.mumbai":"Teller, Mumbai", "manager.surat":"Branch manager, Surat",
-  "manager.mumbai":"Branch manager, Mumbai", "hr.officer":"HR officer", "auditor":"Internal auditor", "intern":"Data intern"};
-const RAWS = {salaries:"Read every salary", national_ids:"Read customers' national IDs",
-  txns_by_branch:"Count transactions in every branch", staff_users:"Read the staff → role mapping"};
-const STAGES = ["identity", "input_guard", "router", "validator", "database", "output_guard"];
+const PEOPLE = {
+  "teller.surat":   ["Teller, Surat",   "Customers and accounts of the Surat branch only"],
+  "teller.mumbai":  ["Teller, Mumbai",  "Customers and accounts of the Mumbai branch only"],
+  "manager.surat":  ["Manager, Surat",  "Everything at the Surat branch, including its staff pay"],
+  "manager.mumbai": ["Manager, Mumbai", "Everything at the Mumbai branch, including its staff pay"],
+  "hr.officer":     ["HR officer",      "Staff and salaries; no customer data"],
+  "auditor":        ["Auditor",         "Every branch, but ID numbers and phones are hidden"],
+  "intern":         ["Intern",          "Only summary totals, never individual records"],
+};
+const DIRECT = {salaries: "Read every salary", national_ids: "Read customers' ID numbers",
+  txns_by_branch: "Count transactions in every branch"};
+const STAGES = {identity: "Who is asking", input_guard: "Safety check on the question", router: "Is this a bank-data question?",
+  validator: "Check of the generated query", database: "Database permissions", output_guard: "Final check of the results"};
+const VERDICT = {answered: ["✅ Answered", "good"], refused: ["⛔ Refused", "no"], needs_clarification: ["❓ Needs more detail", "wait"],
+  needs_review: ["⏸ Held for a manager's approval", "wait"], error: ["⚠ Something went wrong", "no"]};
 const ATTACK = /ignore|drop table|you are now/i;
-let mode = "replay", user = "teller.surat", replays = null, lastQ = null;
+let me = "teller.surat", replays = {questions: [], answers: {}, raw: {}};
 const $ = id => document.getElementById(id);
 
-function el(tag, attrs = {}, ...kids) {  // builds DOM with textContent only: no untrusted HTML ever reaches innerHTML
+function el(tag, attrs = {}, ...kids) {  // textContent only: no untrusted HTML ever reaches innerHTML
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) k === "class" ? e.className = v : e.setAttribute(k, v);
   for (const k of kids) if (k != null) e.append(k);
   return e;
 }
+const name = u => PEOPLE[u][0];
 
-function renderRoles() {
-  $("roles").replaceChildren(...Object.entries(USERS).map(([k, label]) => {
-    const b = el("button", {class: k === user ? "on" : ""}, label);
-    b.onclick = () => { user = k; renderRoles(); };
+function renderPeople() {
+  $("people").replaceChildren(...Object.entries(PEOPLE).map(([u, [n, d]]) => {
+    const b = el("button", {class: "person" + (u === me ? " on" : "")}, el("div", {class: "n"}, n), el("div", {class: "d"}, d));
+    b.onclick = () => { if (u !== me) { me = u; renderPeople(); say(el("div", {class: "sys"}, `You are now: ${n}`)); } };
     return b;
   }));
-  $("other").replaceChildren(...Object.entries(USERS).filter(([k]) => k !== user).map(([k, l]) => el("option", {value: k}, l)));
+  $("whoName").textContent = name(me);
 }
+
+function say(node) { $("chat").append(node); node.scrollIntoView({behavior: "smooth", block: "center"}); return node; }
 
 function table(cols, rows) {
-  if (!rows || !rows.length) return el("div", {class: "muted"}, "No rows.");
+  if (!rows || !rows.length) return el("div", {class: "tbl"}, "(no rows)");
+  const shown = rows.slice(0, 10);
   return el("div", {class: "tbl"}, el("table", {}, el("tr", {}, ...cols.map(c => el("th", {}, c))),
-    ...rows.map(r => el("tr", {}, ...r.map(v => el("td", {}, v == null ? "" : String(v)))))));
+    ...shown.map(r => el("tr", {}, ...r.map(v => el("td", {}, v == null ? "" : String(v)))))),
+    rows.length > 10 ? el("div", {}, `…and ${rows.length - 10} more`) : null);
 }
 
-function answerCard(u, q, r) {
+function askAgain(run, who) {  // "Ask this as someone else"
+  return el("div", {class: "again"}, "Ask this as someone else: ",
+    ...Object.keys(PEOPLE).filter(u => u !== who).map(u => { const b = el("button", {}, name(u)); b.onclick = () => run(u); return b; }));
+}
+
+function answerBubble(u, q, r) {
+  const [label, cls] = VERDICT[r.status] || VERDICT.error;
   const hits = r.policy_hits || [];
-  const trace = el("ul", {class: "trace"}, ...STAGES.map(s => {
-    const h = hits.filter(x => x.stage === s);
-    return el("li", {class: h.length ? "hit" : ""}, el("span", {class: "stage"}, s),
-      h.length ? el("span", {}, ...h.map(x => el("div", {}, el("span", {class: "act"}, x.action + " "),
-        el("code", {}, x.policy_id), x.detail ? el("span", {class: "muted"}, " " + x.detail) : null)))
-        : el("span", {class: "muted"}, "pass"));
-  }));
-  return el("div", {class: "card"},
-    el("div", {}, el("span", {class: "who"}, USERS[u] + " ", el("small", {}, u)), el("span", {class: "pill " + r.status}, r.status)),
-    el("div", {class: "muted", style: "margin-top:4px"}, "“" + q + "”"),
-    el("div", {class: "expl"}, r.explanation || ""),
-    r.sql ? el("pre", {}, r.sql) : null,
-    r.columns && r.columns.length ? table(r.columns.map(c => c.name + (c.masked ? " (masked)" : "")), r.rows) : null,
-    r.truncated ? el("div", {class: "muted"}, "Truncated.") : null,
-    el("div", {class: "muted", style: "margin-top:10px"}, "Step trace (which guard acted)"), trace);
+  return el("div", {class: "msg bot"},
+    el("div", {}, el("span", {class: "verdict " + cls}, label), el("span", {style: "color:var(--muted);font-size:13px"}, `  · for ${name(u)}`)),
+    el("div", {style: "margin-top:6px"}, r.explanation || ""),
+    r.columns && r.columns.length ? table(r.columns.map(c => c.name + (c.masked ? " (hidden)" : "")), r.rows) : null,
+    el("details", {}, el("summary", {}, "How was this checked?"),
+      el("div", {class: "trace"}, ...Object.entries(STAGES).map(([s, label]) => {
+        const h = hits.filter(x => x.stage === s);
+        return h.length ? el("div", {class: "hit"}, `● ${label}: stepped in (${h.map(x => x.policy_id).join(", ")})`)
+                        : el("div", {}, `✓ ${label}: ok`);
+      })),
+      r.sql ? el("div", {}, "The database query the AI wrote:", el("pre", {}, r.sql)) : null),
+    askAgain(other => ask(q, other), u));
 }
 
-function errorCard(u, msg) {
-  return el("div", {class: "card"}, el("span", {class: "who"}, USERS[u]), el("span", {class: "pill error"}, "error"),
-    el("div", {class: "expl"}, msg));
-}
+function problem(text) { return el("div", {class: "msg bot"}, el("span", {class: "verdict no"}, "⚠ "), text); }
 
 async function post(path, body) {
   const res = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : `HTTP ${res.status}`);
-  return data;
+  if (res.status === 429) throw new Error("You're asking very fast. Please wait a minute, or tap one of the suggested questions (those are instant).");
+  if (res.status === 503) throw new Error("Typed questions are switched off right now. Tap one of the suggested questions instead; those always work.");
+  if (!res.ok) throw new Error("Sorry, that didn't work. Please try again or pick a suggested question.");
+  return res.json();
 }
 
-async function ask(u, q) {
-  if (mode === "replay") {
-    const a = replays.answers[q];
-    if (!a) return errorCard(u, "Replay mode only has the suggested questions. Switch to Live to ask your own.");
-    return answerCard(u, q, a[u]);
-  }
-  try { return answerCard(u, q, await post("/playground/ask", {as_user: u, question: q})); }
-  catch (e) { return errorCard(u, e.message); }
+function busy(on) { document.querySelectorAll("button, input").forEach(b => b.disabled = on); }
+
+async function ask(q, u = me) {
+  say(el("div", {class: "msg me"}, el("small", {}, `as ${name(u)}`), q));
+  const recorded = replays.answers[q] && replays.answers[q][u];  // suggested questions: real answers, recorded earlier
+  if (recorded) return say(answerBubble(u, q, recorded));
+  const thinking = say(el("div", {class: "sys"}, "Thinking…"));
+  busy(true);
+  try { thinking.replaceWith(say(answerBubble(u, q, await post("/playground/ask", {as_user: u, question: q})))); }
+  catch (e) { thinking.replaceWith(say(problem(e.message))); }
+  finally { busy(false); }
 }
 
-async function busy(fn) {
-  document.querySelectorAll("button").forEach(b => b.disabled = true); $("busy").textContent = mode === "live" ? "thinking…" : "";
-  try { await fn(); } finally { document.querySelectorAll("button").forEach(b => b.disabled = false); $("busy").textContent = ""; }
+async function direct(sid, u = me) {
+  say(el("div", {class: "msg me"}, el("small", {}, `as ${name(u)}, straight to the database, no AI`), DIRECT[sid]));
+  let r = replays.raw[sid] && replays.raw[sid][u];
+  if (!r) { busy(true); try { r = await post("/playground/raw", {as_user: u, statement_id: sid}); }
+            catch (e) { return say(problem(e.message)); } finally { busy(false); } }
+  const one = sid === "txns_by_branch" && r.status === "ok" && r.rows.length === 1;
+  say(el("div", {class: "msg bot"},
+    r.status === "denied"
+      ? el("div", {}, el("span", {class: "verdict no"}, "🔒 The database said no"), el("div", {}, `“${r.error}”. ${name(u)} isn't allowed to read this, so no trick can get it.`))
+      : el("div", {}, el("span", {class: "verdict good"}, "Allowed"), el("div", {}, one
+          ? "The query asked for every branch, but the database only returned this person's own branch."
+          : `${name(u)} is allowed to see this.`), table(r.columns, r.rows)),
+    el("details", {}, el("summary", {}, "The exact query that was run"), el("pre", {}, r.sql)),
+    askAgain(other => direct(sid, other), u)));
 }
 
-$("ask").onclick = () => {
-  const q = $("q").value.trim(); if (!q) return;
-  busy(async () => { lastQ = {q, u: user}; $("answers").replaceChildren(await ask(user, q)); });
-};
-$("askOther").onclick = () => {
-  const q = $("q").value.trim(); if (!q) return;
-  const second = $("other").value;
-  busy(async () => {
-    const first = lastQ && lastQ.q === q && lastQ.u === user ? $("answers").firstChild : await ask(user, q);
-    $("answers").replaceChildren(first, await ask(second, q)); lastQ = {q, u: user};
-  });
-};
+$("form").onsubmit = e => { e.preventDefault(); const q = $("q").value.trim(); if (q) { $("q").value = ""; ask(q); } };
 
-async function runRaw(sid) {
-  busy(async () => {
-    let r;
-    if (mode === "replay") r = replays.raw[sid][user];
-    else try { r = await post("/playground/raw", {as_user: user, statement_id: sid}); }
-         catch (e) { $("rawOut").replaceChildren(errorCard(user, e.message)); return; }
-    $("rawOut").replaceChildren(el("div", {class: "card"},
-      el("span", {class: "who"}, USERS[user] + " ", el("small", {}, "→ Postgres directly")),
-      el("span", {class: "pill " + r.status}, r.status === "denied" ? "permission denied" : "rows returned"),
-      el("pre", {}, r.sql),
-      r.status === "denied" ? el("pre", {style: "color:var(--bad)"}, "ERROR: " + r.error) : table(r.columns, r.rows),
-      r.status === "ok" && sid === "txns_by_branch" && r.rows.length === 1
-        ? el("div", {class: "note"}, "No WHERE clause, yet one branch: row level security filtered the rest.") : null));
-  });
-}
+const chip = (text, cls, fn) => { const b = el("button", {class: "chip " + cls}, text); b.onclick = fn; return b; };
+$("direct").replaceChildren(...Object.entries(DIRECT).map(([sid, t]) => chip("🗄 " + t, "db", () => direct(sid))));
 
-function setMode(m) {
-  mode = m;
-  document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
-  $("modeNote").textContent = m === "replay"
-    ? `Real pipeline output for the suggested questions, recorded ${replays ? replays.generated_on : ""}. Free and always on.`
-    : "Each question runs the real pipeline (an LLM call + Postgres). Limit: 10 per minute, 100 per day. Max 300 characters.";
-  $("q").readOnly = m === "replay";
-  $("q").placeholder = m === "replay" ? "Pick a suggested question above (switch to Live to type your own)" : "Ask a question about the bank's data...";
-}
-document.querySelectorAll("#modes button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
-
-$("raws").replaceChildren(...Object.entries(RAWS).map(([sid, label]) => {
-  const b = el("button", {}, label); b.onclick = () => runRaw(sid); return b;
-}));
-
-fetch("/playground/replays").then(r => r.json()).then(data => {
-  replays = data;
-  $("prompts").replaceChildren(...data.questions.map(q => {
-    const b = el("button", {class: "chip" + (ATTACK.test(q) ? " attack" : "")}, q);
-    b.onclick = () => { $("q").value = q; $("ask").click(); };
-    return b;
-  }));
-  setMode("replay");
+fetch("/playground/replays").then(r => r.json()).then(d => {
+  replays = d;
+  $("normal").replaceChildren(...d.questions.filter(q => !ATTACK.test(q)).map(q => chip(q, "", () => ask(q))));
+  $("attacks").replaceChildren(...d.questions.filter(q => ATTACK.test(q)).map(q => chip("😈 " + q, "attack", () => ask(q))));
 });
-renderRoles();
+renderPeople();
 </script>
 </body>
 </html>

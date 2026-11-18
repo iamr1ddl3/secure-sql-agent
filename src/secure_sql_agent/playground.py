@@ -35,9 +35,8 @@ RAW_STATEMENTS = {
     "salaries": "select employee_id, effective_from, annual_ctc from bank.salaries order by annual_ctc desc limit 5",
     "national_ids": "select full_name, national_id from bank.customers order by customer_id limit 5",
     "txns_by_branch": "select branch_id, count(*) as txns from bank.transactions group by branch_id order by branch_id",
-    "staff_users": "select * from app.staff_users limit 5",
 }
-RawId = Literal["salaries", "national_ids", "txns_by_branch", "staff_users"]
+RawId = Literal["salaries", "national_ids", "txns_by_branch"]
 
 MAX_QUESTION = 300
 
