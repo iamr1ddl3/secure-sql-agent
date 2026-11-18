@@ -50,7 +50,12 @@ jobs:
 
       - name: Eval on the golden set
         # only this step sees the key; fork PRs get no secrets, so there the stub runs and the gate skips
-        env: { OPENROUTER_API_KEY: "${{ secrets.OPENROUTER_API_KEY }}" }
+        # The eval brings its own signing key, DB connection and token verifier; the two placeholders only satisfy
+        # the service's required settings and are never used.
+        env:
+          OPENROUTER_API_KEY: "${{ secrets.OPENROUTER_API_KEY }}"
+          SUPABASE_URL: http://localhost
+          IDENTITY_HMAC_KEY: ci-placeholder-not-used-by-the-eval-0000
         timeout-minutes: 20
         run: python evals/run_eval.py
 
