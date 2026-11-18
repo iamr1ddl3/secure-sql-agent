@@ -12,3 +12,8 @@ data/raw/
 # vault / assistant metadata stays private (portfolio template)
 CLAUDE.md
 .claude/
+# demo video project: render cache, raw renders and scaffold agent notes stay local
+demo/.hyperframes/
+demo/renders/
+demo/AGENTS.md
+demo/meta.json

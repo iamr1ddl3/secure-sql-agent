@@ -1,0 +1,8 @@
+b1|Ask a bank's AI assistant for every employee's salary. What actually stops it?
+b2|In most designs, nothing but a sentence in the prompt. The model holds a master key, and is asked nicely to behave. Here, it holds no key at all. Every query runs as the person who asked.
+b3|Two tellers ask the same question. The model writes the same SQL, with no branch filter. Postgres row level security hands each of them only their own branch.
+b4|Ask about another branch, and it says why it can't. Try a prompt injection, and it refuses. Ask something vague, and it asks back instead of guessing.
+b5|Now skip the AI entirely, and run a query as the teller. Permission denied. Even a fully fooled model can't see more than the user.
+b6|Zero leaked rows across forty seven permission checks. Ninety seven point nine percent accuracy on a hundred and fifty human reviewed questions. No attack got through, at about twenty three cents per thousand questions.
+b7|And every change has to pass that exam again in C I, or it doesn't ship.
+b8|The database decides who sees what. Not the model.

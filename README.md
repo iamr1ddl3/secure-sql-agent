@@ -9,6 +9,15 @@ is gated by evals in CI.
 
 ![A fooled assistant can only open what the asker could open](docs/images/master-key-vs-key-card.png)
 
+### Demo (85 seconds, with narration)
+
+[![Demo: same SQL, different answer. Two tellers, one query, each sees only their own branch](docs/demo/poster.jpg)](docs/demo/secure-sql-agent-demo.mp4)
+
+Every answer in the video is real output from the live service: two tellers asking the same question get the same
+SQL and different totals, refusals and an ask-back, and raw SQL run as the teller with no model in the loop
+(`permission denied for table salaries`). The video is code too: [`demo/`](demo/) is a HyperFrames composition with
+Kokoro TTS narration (`npx hyperframes render` rebuilds it).
+
 ## Results
 
 Golden set: 150 questions in 7 groups, run end to end against hosted Supabase as the 7 demo identities. SQL model
@@ -223,7 +232,7 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Jev router comparison (stage 3), Langfuse tracing
 - [x] Docker image build verified (`/healthz` reports 1.0.0)
 - [x] v1.0.0 tag
-- [ ] Demo video
+- [x] Demo video ([`docs/demo/`](docs/demo/), source in [`demo/`](demo/))
 
 ## What did not work
 
