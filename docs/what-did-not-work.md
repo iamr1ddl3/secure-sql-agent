@@ -74,3 +74,15 @@ Running log. Becomes the README's "What did not work" section.
   97.5/97.5% after, no answerable question sent back). Result: execution accuracy 97.9% (unchanged), item pass 97.3% → 98.0%.
   New in this run: pb-22 and pb-26 (passed 3 of 3 on replay, noise) and pb-24, which fails 3 of 3: for the Surat manager the agent
   averages staff who have left, for HR it filters to active. Left open rather than tuned.
+- **2026-11-19 · Playground replays surfaced three weak intern answers (no leaks).** Building the replay set (12 questions ×
+  7 roles, $0.019) showed the intern, who can read only the `analytics.*` aggregate views, getting `answered` where a refusal
+  or ask-back was right: "customer phone numbers and national IDs for my branch" returned customer counts by segment;
+  "total deposits at my branch last month" summed `inflow_total` across all branches (the intern has no branch, and inflow
+  is not only deposits); "active loans by loan type" returned 0 rows. No restricted column or row came back (the views are
+  all the intern can open), but the answers are misleading. Left as-is in the replays, not tuned: P1 is frozen at v1.0.0
+  and the honest output is the point of the playground. Candidate fix: the router should refuse when the only readable
+  tables can't answer the question.
+- **2026-11-19 · Sandbox: the Postgres pooler and pytest's rerunfailures plugin need the sandbox bypass.** psycopg can't
+  resolve the Supabase pooler host inside the sandbox (HTTP to Supabase Auth works through the proxy), and
+  pytest-rerunfailures binds a local socket at startup. Runs against the hosted DB used the bypass; `-p no:rerunfailures`
+  runs the contract tests inside the sandbox.
