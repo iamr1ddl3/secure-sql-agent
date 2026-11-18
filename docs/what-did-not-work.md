@@ -46,3 +46,21 @@ Running log. Becomes the README's "What did not work" section.
 - **2026-11-18 · The Claude Code Langfuse plugin was sending every chat session to the app's Langfuse project.** Session
   traces (messages, tool inputs) mixed with app traces. Plugin config removed and the 8 session traces deleted; use a separate
   Langfuse project if session tracing is wanted again. App traces never include result rows.
+- **2026-11-19 · The seed gave Surat and Mumbai two active Branch Managers each.** The demo logins `manager.surat` and
+  `manager.mumbai` were added as extra employee rows on top of each branch's generated manager. The golden-set review caught it
+  (jn-11 returned 12 managers for 10 branches). Fix: the demo login now takes over the branch's existing manager row. `add()` still
+  runs so the random stream, and every customer, account, transaction and loan, stays identical; only 2 employees and their
+  4 salary rows go (142 to 140 employees).
+- **2026-11-19 · Rows were dated before the branch or customer they belong to.** 735 customers, 221 accounts, 13 loans and
+  33 employees predated their branch's opening date, and 377 loans were disbursed before the customer existed. Branch opening
+  dates were labels no generator read, and loan dates were drawn from a fixed 2016 floor. Fix: branches now open 1996–2004
+  (same order), before the 2005 hiring floor, and each loan date starts at the customer's creation date. Customers, accounts,
+  transactions and employees are unchanged; only loan dates and outstanding amounts moved (no counts). Guarded by
+  `tests/contract/test_seed_dates.py`.
+- **2026-11-19 · The golden set had 4 wrong references, and the review moved the headline number both ways.** pb-24..27
+  ("average current salary of our employees") averaged staff who had left; a leaver has no current salary, and the agent kept
+  (correctly) filtering to active staff, so it failed those items every run. Fixed to active only. Execution accuracy:
+  96.8% pre-review (tuned while looking at the set), 94.7% after the seed fixes with the wrong references, **97.9%** after the
+  reference fix. One run each; ag-23, pb-15 and pb-26 failed in the 94.7% run and passed on replay, so swings of ~2 points
+  between runs are normal. Remaining misses: ag-25 (extra column, scorer is strict), am-06 and am-15 (guessed instead of
+  asking back), ag-03 (this run only). Pre-review report kept at `docs/results/golden_prereview_haiku.json`.

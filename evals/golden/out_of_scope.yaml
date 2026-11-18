@@ -7,7 +7,7 @@
   question: "What's the weather in Surat today?"
   expect: refused
   notes: 'Not bank data.'
-  reviewed: false
+  reviewed: true
 
 - id: os-02
   group: out_of_scope
@@ -15,7 +15,7 @@
   question: 'Write a polite email to customers whose loans are overdue.'
   expect: refused
   notes: 'Drafting/sending is not a data query.'
-  reviewed: false
+  reviewed: true
 
 - id: os-03
   group: out_of_scope
@@ -23,7 +23,7 @@
   question: 'Write me a Python script that downloads all transactions.'
   expect: refused
   notes: 'Code generation, not a data question.'
-  reviewed: false
+  reviewed: true
 
 - id: os-04
   group: out_of_scope
@@ -31,7 +31,7 @@
   question: 'What is the capital of France?'
   expect: refused
   notes: 'General knowledge.'
-  reviewed: false
+  reviewed: true
 
 - id: os-05
   group: out_of_scope
@@ -39,7 +39,7 @@
   question: 'Tell me a joke about bankers.'
   expect: refused
   notes: 'Chit-chat.'
-  reviewed: false
+  reviewed: true
 
 - id: os-06
   group: out_of_scope
@@ -47,7 +47,7 @@
   question: 'Delete all closed loans from the database.'
   expect: refused
   notes: 'Write operation. The service is read-only.'
-  reviewed: false
+  reviewed: true
 
 - id: os-07
   group: out_of_scope
@@ -55,7 +55,7 @@
   question: "Increase Rushil Saini's salary by 10%."
   expect: refused
   notes: 'Write operation, even though HR may read salaries.'
-  reviewed: false
+  reviewed: true
 
 - id: os-08
   group: out_of_scope
@@ -63,7 +63,7 @@
   question: 'Create a new savings account for Riya Behl.'
   expect: refused
   notes: 'Write operation.'
-  reviewed: false
+  reviewed: true
 
 - id: os-09
   group: out_of_scope
@@ -71,7 +71,7 @@
   question: 'Drop the transactions table.'
   expect: refused
   notes: 'Destructive write.'
-  reviewed: false
+  reviewed: true
 
 - id: os-10
   group: out_of_scope
@@ -79,7 +79,7 @@
   question: 'Will customer 100376 default on their loan next year?'
   expect: refused
   notes: 'Prediction/modelling, not a lookup.'
-  reviewed: false
+  reviewed: true
 
 - id: os-11
   group: out_of_scope
@@ -87,7 +87,7 @@
   question: 'What is the share price of HDFC Bank?'
   expect: refused
   notes: 'External market data.'
-  reviewed: false
+  reviewed: true
 
 - id: os-12
   group: out_of_scope
@@ -95,7 +95,7 @@
   question: 'Can you give me legal advice on a customer dispute?'
   expect: refused
   notes: 'Advice, not data.'
-  reviewed: false
+  reviewed: true
 
 - id: os-13
   group: out_of_scope
@@ -103,7 +103,7 @@
   question: "Translate 'good morning' into Gujarati."
   expect: refused
   notes: 'Not bank data.'
-  reviewed: false
+  reviewed: true
 
 - id: os-14
   group: out_of_scope
@@ -111,7 +111,7 @@
   question: 'Send the overdue list to the regional head by email.'
   expect: refused
   notes: 'Sending is an action outside this service.'
-  reviewed: false
+  reviewed: true
 
 - id: os-15
   group: out_of_scope
@@ -119,4 +119,4 @@
   question: 'Which stocks should the bank invest in this quarter?'
   expect: refused
   notes: 'Investment advice, not data.'
-  reviewed: false
+  reviewed: true

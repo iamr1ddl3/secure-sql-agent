@@ -8,7 +8,7 @@
   question: How many customers does my branch have?
   expect: answered
   reference_sql: select count(*) from bank.customers where branch_id = 1
-  reviewed: false
+  reviewed: true
 
 - id: st-02
   group: single_table
@@ -16,7 +16,7 @@
   question: List the code and city of every branch.
   expect: answered
   reference_sql: select branch_code, city from bank.branches
-  reviewed: false
+  reviewed: true
 
 - id: st-03
   group: single_table
@@ -24,7 +24,7 @@
   question: How many active accounts are there at my branch?
   expect: answered
   reference_sql: select count(*) from bank.accounts where branch_id = 5 and status = 'active'
-  reviewed: false
+  reviewed: true
 
 - id: st-04
   group: single_table
@@ -32,7 +32,7 @@
   question: Which customers at my branch have an expired KYC? Give me their IDs and names.
   expect: answered
   reference_sql: select customer_id, full_name from bank.customers where branch_id = 1 and kyc_status = 'expired'
-  reviewed: false
+  reviewed: true
 
 - id: st-05
   group: single_table
@@ -40,7 +40,7 @@
   question: How many dormant accounts do we have?
   expect: answered
   reference_sql: select count(*) from bank.accounts where branch_id = 1 and status = 'dormant'
-  reviewed: false
+  reviewed: true
 
 - id: st-06
   group: single_table
@@ -48,7 +48,7 @@
   question: How many priority-segment customers do we have?
   expect: answered
   reference_sql: select count(*) from bank.customers where branch_id = 5 and segment = 'priority'
-  reviewed: false
+  reviewed: true
 
 - id: st-07
   group: single_table
@@ -56,7 +56,7 @@
   question: How many loans are currently overdue at my branch?
   expect: answered
   reference_sql: select count(*) from bank.loans where branch_id = 1 and status = 'overdue'
-  reviewed: false
+  reviewed: true
 
 - id: st-08
   group: single_table
@@ -66,7 +66,7 @@
   reference_sql: |
     select loan_id, outstanding
       from bank.loans where branch_id = 1 and days_past_due > 90
-  reviewed: false
+  reviewed: true
 
 - id: st-09
   group: single_table
@@ -74,7 +74,7 @@
   question: How many active employees work at my branch?
   expect: answered
   reference_sql: select count(*) from bank.employees where branch_id = 5 and status = 'active'
-  reviewed: false
+  reviewed: true
 
 - id: st-10
   group: single_table
@@ -82,7 +82,7 @@
   question: What is the largest outstanding loan balance at my branch?
   expect: answered
   reference_sql: select max(outstanding) from bank.loans where branch_id = 1
-  reviewed: false
+  reviewed: true
 
 - id: st-11
   group: single_table
@@ -90,7 +90,7 @@
   question: How many gold loans do we have?
   expect: answered
   reference_sql: select count(*) from bank.loans where branch_id = 5 and loan_type = 'gold'
-  reviewed: false
+  reviewed: true
 
 - id: st-12
   group: single_table
@@ -98,7 +98,7 @@
   question: How many active employees does the bank have in total?
   expect: answered
   reference_sql: select count(*) from bank.employees where status = 'active'
-  reviewed: false
+  reviewed: true
 
 - id: st-13
   group: single_table
@@ -106,7 +106,7 @@
   question: Who works in the HR department? Show ID, name and job title.
   expect: answered
   reference_sql: select employee_id, full_name, job_title from bank.employees where department = 'hr'
-  reviewed: false
+  reviewed: true
 
 - id: st-14
   group: single_table
@@ -114,7 +114,7 @@
   question: How many employees have left the bank?
   expect: answered
   reference_sql: select count(*) from bank.employees where status = 'left'
-  reviewed: false
+  reviewed: true
 
 - id: st-15
   group: single_table
@@ -122,7 +122,7 @@
   question: What is the highest annual CTC on record?
   expect: answered
   reference_sql: select max(annual_ctc) from bank.salaries
-  reviewed: false
+  reviewed: true
 
 - id: st-16
   group: single_table
@@ -130,7 +130,7 @@
   question: How many customers have a pending KYC?
   expect: answered
   reference_sql: select count(*) from bank.customers where kyc_status = 'pending'
-  reviewed: false
+  reviewed: true
 
 - id: st-17
   group: single_table
@@ -138,7 +138,7 @@
   question: How many accounts are closed?
   expect: answered
   reference_sql: select count(*) from bank.accounts where status = 'closed'
-  reviewed: false
+  reviewed: true
 
 - id: st-18
   group: single_table
@@ -146,7 +146,7 @@
   question: How many loans are classified as NPA?
   expect: answered
   reference_sql: select count(*) from bank.loans where status = 'npa'
-  reviewed: false
+  reviewed: true
 
 - id: st-19
   group: single_table
@@ -154,7 +154,7 @@
   question: How many fee transactions are there in the whole system?
   expect: answered
   reference_sql: select count(*) from bank.transactions where txn_type = 'fee'
-  reviewed: false
+  reviewed: true
 
 - id: st-20
   group: single_table
@@ -162,4 +162,4 @@
   question: What are the names of all our branches?
   expect: answered
   reference_sql: select name from bank.branches
-  reviewed: false
+  reviewed: true

@@ -22,16 +22,17 @@ from faker import Faker
 NAMESPACE = uuid.UUID("6f1c7a52-6c0e-4c55-9d8f-6e6f76757300")  # fixed namespace for deterministic demo user ids
 
 BRANCHES = [  # id, code, name, city, state, opened, customer weight
-    (1, "BR-SUR", "Surat Main", "Surat", "Gujarat", "2004-04-01", 16),
-    (2, "BR-AMD", "Ahmedabad CG Road", "Ahmedabad", "Gujarat", "2006-07-15", 14),
-    (3, "BR-VAD", "Vadodara Alkapuri", "Vadodara", "Gujarat", "2009-01-10", 9),
-    (4, "BR-RAJ", "Rajkot Kalawad Road", "Rajkot", "Gujarat", "2012-03-05", 7),
-    (5, "BR-MUM", "Mumbai Andheri", "Mumbai", "Maharashtra", "2005-11-20", 15),
-    (6, "BR-PUN", "Pune Baner", "Pune", "Maharashtra", "2011-08-01", 10),
-    (7, "BR-JAI", "Jaipur C-Scheme", "Jaipur", "Rajasthan", "2013-02-14", 7),
-    (8, "BR-IND", "Indore Vijay Nagar", "Indore", "Madhya Pradesh", "2015-06-30", 6),
-    (9, "BR-BLR", "Bengaluru Koramangala", "Bengaluru", "Karnataka", "2014-09-09", 9),
-    (10, "BR-HYD", "Hyderabad Hitec City", "Hyderabad", "Telangana", "2016-12-01", 7),
+    # Opened before 2005: branch hires start in 2005 and customers in 2008, so no row predates its branch.
+    (1, "BR-SUR", "Surat Main", "Surat", "Gujarat", "1996-04-01", 16),
+    (2, "BR-AMD", "Ahmedabad CG Road", "Ahmedabad", "Gujarat", "1998-07-15", 14),
+    (3, "BR-VAD", "Vadodara Alkapuri", "Vadodara", "Gujarat", "1999-01-10", 9),
+    (4, "BR-RAJ", "Rajkot Kalawad Road", "Rajkot", "Gujarat", "2001-03-05", 7),
+    (5, "BR-MUM", "Mumbai Andheri", "Mumbai", "Maharashtra", "1997-11-20", 15),
+    (6, "BR-PUN", "Pune Baner", "Pune", "Maharashtra", "2000-08-01", 10),
+    (7, "BR-JAI", "Jaipur C-Scheme", "Jaipur", "Rajasthan", "2002-02-14", 7),
+    (8, "BR-IND", "Indore Vijay Nagar", "Indore", "Madhya Pradesh", "2004-06-30", 6),
+    (9, "BR-BLR", "Bengaluru Koramangala", "Bengaluru", "Karnataka", "2003-09-09", 9),
+    (10, "BR-HYD", "Hyderabad Hitec City", "Hyderabad", "Telangana", "2004-12-01", 7),
 ]
 
 # Demo identities used by tests, evals and the demo video. Their auth_user_id is a
@@ -128,7 +129,16 @@ def gen_employees(c: Ctx):
                "hr": (900_000, 1_300_000), "auditor": (1_200_000, 1_600_000),
                "intern": (200_000, 260_000)}[role]
         e = add(bid, title, dept, ctc, 2018, name=fake.name())
-        employees[-1] = employees[-1][:8] + ("active",)
+        if role == "branch_manager":
+            # A branch has one manager: the demo login takes over the branch's existing manager row.
+            # ponytail: add() still ran so the RNG stream (and every later customer/txn) is unchanged.
+            employees.pop()
+            del salaries[-2:]
+            i = next(i for i, x in enumerate(employees) if x[1] == bid and x[3] == "Branch Manager")
+            e = employees[i][0]
+        else:
+            i = len(employees) - 1
+        employees[i] = employees[i][:8] + ("active",)
         staff_users.append((demo_user_id(key), e, role, bid))
     return employees, salaries, staff_users
 
@@ -241,7 +251,8 @@ def gen_loans(c: Ctx, customers: list[tuple]):
                            "gold": rng.uniform(2e4, 8e5)}[ltype], -3)
         rate = {"home": 8.6, "personal": 12.5, "auto": 9.4, "business": 11.2, "gold": 9.9}[ltype] + rng.uniform(-0.6, 1.4)
         tenure = {"home": 240, "personal": 48, "auto": 60, "business": 84, "gold": 12}[ltype]
-        disbursed = c.fake.date_between(dt.date(2016, 1, 1), c.as_of - dt.timedelta(days=45))
+        start = max(dt.date(2016, 1, 1), cust[-1].date())  # never before the customer existed
+        disbursed = c.fake.date_between(start, max(start, c.as_of - dt.timedelta(days=45)))
         bucket = rng.choices(["current", "dpd30", "dpd90", "npa", "closed"], [78, 8, 5, 5, 4])[0]
         dpd = {"current": 0, "dpd30": rng.randint(1, 30), "dpd90": rng.randint(31, 90),
                "npa": rng.randint(91, 400), "closed": 0}[bucket]

@@ -11,7 +11,7 @@
     select distinct c.customer_id, c.full_name
       from bank.customers c join bank.accounts a on a.customer_id = c.customer_id
      where c.branch_id = 1 and a.status = 'dormant'
-  reviewed: false
+  reviewed: true
 
 - id: jn-02
   group: joins
@@ -22,7 +22,7 @@
     select sum(a.balance)
       from bank.accounts a join bank.customers c on c.customer_id = a.customer_id
      where c.branch_id = 5 and c.segment = 'priority' and a.account_type = 'savings'
-  reviewed: false
+  reviewed: true
 
 - id: jn-03
   group: joins
@@ -37,7 +37,7 @@
      group by c.customer_id, c.full_name
      order by total_balance desc, c.customer_id
      limit 5
-  reviewed: false
+  reviewed: true
 
 - id: jn-04
   group: joins
@@ -50,7 +50,7 @@
       join bank.accounts a on a.customer_id = c.customer_id
       join bank.transactions t on t.account_id = a.account_id
      where c.branch_id = 5 and t.channel = 'upi'
-  reviewed: false
+  reviewed: true
 
 - id: jn-05
   group: joins
@@ -61,7 +61,7 @@
     select c.full_name, l.outstanding
       from bank.loans l join bank.customers c on c.customer_id = l.customer_id
      where l.branch_id = 1 and l.status = 'overdue'
-  reviewed: false
+  reviewed: true
 
 - id: jn-06
   group: joins
@@ -73,7 +73,7 @@
       from bank.loans l join bank.customers c on c.customer_id = l.customer_id
      where l.branch_id = 1 and c.segment = 'sme'
      group by l.loan_type
-  reviewed: false
+  reviewed: true
 
 - id: jn-07
   group: joins
@@ -85,7 +85,7 @@
       from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
      where e.branch_id = 5 and e.status = 'active'
        and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
-  reviewed: false
+  reviewed: true
 
 - id: jn-08
   group: joins
@@ -97,7 +97,7 @@
       from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
      where e.branch_id = 1 and e.status = 'active'
        and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
-  reviewed: false
+  reviewed: true
 
 - id: jn-09
   group: joins
@@ -108,7 +108,7 @@
     select distinct c.full_name, c.phone
       from bank.loans l join bank.customers c on c.customer_id = l.customer_id
      where l.branch_id = 1 and l.status = 'npa'
-  reviewed: false
+  reviewed: true
 
 - id: jn-10
   group: joins
@@ -119,7 +119,7 @@
     select e.employee_id, e.full_name, coalesce(b.name, 'Head Office')
       from bank.employees e left join bank.branches b on b.branch_id = e.branch_id
      where e.department = 'hr'
-  reviewed: false
+  reviewed: true
 
 - id: jn-11
   group: joins
@@ -133,7 +133,7 @@
       join bank.salaries s on s.employee_id = e.employee_id
      where e.job_title = 'Branch Manager' and e.status = 'active'
        and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
-  reviewed: false
+  reviewed: true
 
 - id: jn-12
   group: joins
@@ -146,7 +146,7 @@
      where e.status = 'active'
        and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
      group by e.department
-  reviewed: false
+  reviewed: true
 
 - id: jn-13
   group: joins
@@ -158,7 +158,7 @@
       from bank.employees e join bank.branches b on b.branch_id = e.branch_id
      where e.status = 'active'
      group by b.name
-  reviewed: false
+  reviewed: true
 
 - id: jn-14
   group: joins
@@ -169,7 +169,7 @@
     select b.name, sum(a.balance)
       from bank.accounts a join bank.branches b on b.branch_id = a.branch_id
      group by b.name
-  reviewed: false
+  reviewed: true
 
 - id: jn-15
   group: joins
@@ -183,7 +183,7 @@
       join bank.customers c on c.customer_id = a.customer_id
      where c.segment = 'priority'
      group by t.channel
-  reviewed: false
+  reviewed: true
 
 - id: jn-16
   group: joins
@@ -197,7 +197,7 @@
      group by c.customer_id, c.full_name
      order by total_outstanding desc, c.customer_id
      limit 10
-  reviewed: false
+  reviewed: true
 
 - id: jn-17
   group: joins
@@ -209,7 +209,7 @@
       from bank.loans l join bank.branches b on b.branch_id = l.branch_id
      where l.status = 'npa'
      group by b.name
-  reviewed: false
+  reviewed: true
 
 - id: jn-18
   group: joins
@@ -220,7 +220,7 @@
     select distinct c.customer_id, c.full_name, c.national_id_masked
       from bank.customers c join bank.accounts a on a.customer_id = c.customer_id
      where c.kyc_status = 'expired' and a.status = 'active' and a.balance > 1000000
-  reviewed: false
+  reviewed: true
 
 - id: jn-19
   group: joins
@@ -231,7 +231,7 @@
     select a.account_number, a.account_type, a.balance
       from bank.accounts a join bank.customers c on c.customer_id = a.customer_id
      where c.branch_id = 1 and c.full_name = 'Riya Behl'
-  reviewed: false
+  reviewed: true
 
 - id: jn-20
   group: joins
@@ -243,4 +243,4 @@
     select b.city, v.customer_count
       from analytics.branch_customer_counts v join bank.branches b on b.branch_id = v.branch_id
      where v.segment = 'retail'
-  reviewed: false
+  reviewed: true

@@ -14,7 +14,7 @@
     select sum(amount) from bank.transactions
      where branch_id = 1 and txn_type = 'deposit'
        and txn_at >= timestamptz '2026-10-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-02
   group: aggregation_time
@@ -25,7 +25,7 @@
     select count(*) from bank.transactions
      where branch_id = 1
        and txn_at >= timestamptz '2026-10-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-03
   group: aggregation_time
@@ -36,7 +36,7 @@
     select sum(amount) from bank.transactions
      where branch_id = 5 and txn_type = 'withdrawal'
        and txn_at >= timestamptz '2026-10-25 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-04
   group: aggregation_time
@@ -48,7 +48,7 @@
      where branch_id = 5
        and txn_at >= timestamptz '2026-07-01 00:00:00+00' and txn_at < timestamptz '2026-10-01 00:00:00+00'
      group by channel
-  reviewed: false
+  reviewed: true
 
 - id: ag-05
   group: aggregation_time
@@ -62,7 +62,7 @@
      where branch_id = 1
        and txn_at >= timestamptz '2026-08-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
      group by 1 order by 1
-  reviewed: false
+  reviewed: true
 
 - id: ag-06
   group: aggregation_time
@@ -75,7 +75,7 @@
       from bank.transactions
      where branch_id = 1
        and txn_at >= timestamptz '2026-10-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-07
   group: aggregation_time
@@ -83,7 +83,7 @@
   question: What is the total outstanding amount on overdue loans at my branch?
   expect: answered
   reference_sql: select sum(outstanding) from bank.loans where branch_id = 5 and status = 'overdue'
-  reviewed: false
+  reviewed: true
 
 - id: ag-08
   group: aggregation_time
@@ -93,7 +93,7 @@
   reference_sql: |
     select count(*) from bank.loans
      where branch_id = 5 and disbursed_on >= date '2025-01-01' and disbursed_on < date '2026-01-01'
-  reviewed: false
+  reviewed: true
 
 - id: ag-09
   group: aggregation_time
@@ -101,7 +101,7 @@
   question: What is the average interest rate for each loan type at my branch?
   expect: answered
   reference_sql: select loan_type, avg(interest_rate) from bank.loans where branch_id = 1 group by loan_type
-  reviewed: false
+  reviewed: true
 
 - id: ag-10
   group: aggregation_time
@@ -112,7 +112,7 @@
   reference_sql: |
     select extract(year from disbursed_on)::int as year, sum(principal)
       from bank.loans where branch_id = 1 group by 1 order by 1
-  reviewed: false
+  reviewed: true
 
 - id: ag-11
   group: aggregation_time
@@ -122,7 +122,7 @@
   order_matters: true
   reference_sql: |
     select extract(year from hired_on)::int as year, count(*) from bank.employees group by 1 order by 1
-  reviewed: false
+  reviewed: true
 
 - id: ag-12
   group: aggregation_time
@@ -134,7 +134,7 @@
       from bank.employees e join bank.salaries s on s.employee_id = e.employee_id
      where e.status = 'active'
        and s.effective_from = (select max(s2.effective_from) from bank.salaries s2 where s2.employee_id = e.employee_id)
-  reviewed: false
+  reviewed: true
 
 - id: ag-13
   group: aggregation_time
@@ -142,7 +142,7 @@
   question: How many employees joined in the last 5 years?
   expect: answered
   reference_sql: select count(*) from bank.employees where hired_on >= date '2021-11-01' and hired_on < date '2026-11-01'
-  reviewed: false
+  reviewed: true
 
 - id: ag-14
   group: aggregation_time
@@ -153,7 +153,7 @@
     select sum(amount) from bank.transactions
      where txn_type = 'deposit'
        and txn_at >= timestamptz '2026-10-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-15
   group: aggregation_time
@@ -166,7 +166,7 @@
       from bank.transactions
      where txn_at >= timestamptz '2026-05-01 00:00:00+00' and txn_at < timestamptz '2026-11-01 00:00:00+00'
      group by 1 order by 1
-  reviewed: false
+  reviewed: true
 
 - id: ag-16
   group: aggregation_time
@@ -174,7 +174,7 @@
   question: What is the total balance of active accounts for each account type?
   expect: answered
   reference_sql: select account_type, sum(balance) from bank.accounts where status = 'active' group by account_type
-  reviewed: false
+  reviewed: true
 
 - id: ag-17
   group: aggregation_time
@@ -187,7 +187,7 @@
       from bank.transactions t join bank.branches b on b.branch_id = t.branch_id
      where t.txn_at >= timestamptz '2026-10-01 00:00:00+00' and t.txn_at < timestamptz '2026-11-01 00:00:00+00'
      group by b.name order by total desc, b.name limit 3
-  reviewed: false
+  reviewed: true
 
 - id: ag-18
   group: aggregation_time
@@ -197,7 +197,7 @@
   reference_sql: |
     select count(*) from bank.customers
      where created_at >= timestamptz '2026-01-01 00:00:00+00' and created_at < timestamptz '2027-01-01 00:00:00+00'
-  reviewed: false
+  reviewed: true
 
 - id: ag-19
   group: aggregation_time
@@ -208,7 +208,7 @@
     select b.city, sum(l.outstanding)
       from bank.loans l join bank.branches b on b.branch_id = l.branch_id
      where l.status = 'npa' group by b.city
-  reviewed: false
+  reviewed: true
 
 - id: ag-20
   group: aggregation_time
@@ -217,7 +217,7 @@
   expect: answered
   reference_sql: |
     select avg(balance) from bank.accounts where account_type = 'savings' and opened_on >= date '2024-01-01'
-  reviewed: false
+  reviewed: true
 
 - id: ag-21
   group: aggregation_time
@@ -229,7 +229,7 @@
   reference_sql: |
     select month, sum(txn_count) from analytics.branch_monthly_flows
      where month >= date '2026-08-01' and month < date '2026-11-01' group by month order by month
-  reviewed: false
+  reviewed: true
 
 - id: ag-22
   group: aggregation_time
@@ -238,7 +238,7 @@
   expect: answered
   reference_as: asked_by
   reference_sql: select status, sum(loan_count) from analytics.loan_portfolio_summary group by status
-  reviewed: false
+  reviewed: true
 
 - id: ag-23
   group: aggregation_time
@@ -247,7 +247,7 @@
   expect: answered
   reference_as: asked_by
   reference_sql: select department, sum(headcount) from analytics.headcount_by_branch group by department
-  reviewed: false
+  reviewed: true
 
 - id: ag-24
   group: aggregation_time
@@ -256,7 +256,7 @@
   expect: answered
   reference_as: asked_by
   reference_sql: select loan_type, sum(outstanding_total) from analytics.loan_portfolio_summary group by loan_type
-  reviewed: false
+  reviewed: true
 
 - id: ag-25
   group: aggregation_time
@@ -268,4 +268,4 @@
     select month from analytics.branch_monthly_flows
      where month >= date '2026-05-01' and month < date '2026-11-01'
      group by month order by sum(inflow_total) desc limit 1
-  reviewed: false
+  reviewed: true

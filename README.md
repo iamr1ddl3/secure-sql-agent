@@ -17,12 +17,12 @@ and router both Claude Haiku 5.5 (the default; Sonnet 5.5 is compared below), vi
 | Metric | Value |
 | --- | --- |
 | RLS leak count on permission tests | **0** across 47 checks (incl. 10 attack cases that assume the validator is bypassed) |
-| Execution accuracy, overall | **96.8%** (item pass rate 96.7%; Sonnet 5.5 scored 98.9% / 97.3% on an earlier run) |
-| Per group (item pass rate) | single table 100% · joins 100% · aggregation + time 96% · ambiguous 87% · out of scope 100% · permission boundary 94% · attack 100% |
+| Execution accuracy, overall | **97.9%** (item pass rate 97.3%) on the human-reviewed golden set; 96.8% before review |
+| Per group (item pass rate) | single table 100% · joins 100% · aggregation + time 92% · ambiguous 87% · out of scope 100% · permission boundary 100% · attack 100% |
 | Attack success by type, guards off → on | direct injection 17% → **0%** · SQL in the question 60% → **0%** · system-prompt extraction 0% → 0% · injection hidden in data 0% → 0% |
 | False-block rate on benign questions | **0%** (guards on) |
-| p50 / p95 latency | **4.0 s / 5.7 s** (two model calls per question) |
-| Cost per 1,000 queries | Haiku 5.5 **$0.23** (96.8%, default) · Sonnet 5.5 $2.46 (97.9%) · gpt-5-mini $0.91 (88.3%, p95 16 s) · qwen3-coder $0.23 (75.5%, 6.7% false blocks) |
+| p50 / p95 latency | **3.9 s / 5.5 s** (two model calls per question) |
+| Cost per 1,000 queries | Haiku 5.5 **$0.23** (97.9% post-review, default) · Sonnet 5.5 $2.46 (97.9%) · gpt-5-mini $0.91 (88.3%, p95 16 s) · qwen3-coder $0.23 (75.5%, 6.7% false blocks) |
 | Ontology gain (stage 2) | **+3.2 points** (Sonnet) and **+1.1** (Haiku), within run-to-run noise; +14% to +32% prompt cost |
 | Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev (`typesafe/jev-1.13`) **85.0%** (0.8 s, $0.023 per 1,000 decisions); Jev loses, so the small LLM stays the default |
 
@@ -30,8 +30,10 @@ How to read these honestly:
 
 - "Attack success" means the agent answered with rows when it should have refused. Rows leaked **beyond a role's permission** are
   0 in every mode, because the database enforces that regardless of what the model does.
-- The golden set is not yet human-reviewed, and the prompt and input-guard patterns were tuned while looking at it, so treat the
-  accuracy numbers as an upper bound. The regex router scored 98.7% on the golden set and 32.5% on unseen questions: that gap is
+- All 150 golden items were human-reviewed (2026-11-19). The review fixed 4 wrong references (an average that counted staff who
+  had left) and two seed-data bugs (duplicate branch managers, rows dated before their branch or customer). The prompt and
+  input-guard patterns were still tuned while looking at this set, so the held-out router numbers are the fairer test of
+  generalisation. Model-comparison and ontology rows below were measured before the review. The regex router scored 98.7% on the golden set and 32.5% on unseen questions: that gap is
   the lesson. See [`docs/what-did-not-work.md`](docs/what-did-not-work.md).
 - One run per configuration; differences under about 2 points are noise.
 - These come from local runs (CI has no model key yet, so its eval step is skipped). Reproduce with
@@ -151,7 +153,12 @@ for every status. Adding optional fields is non-breaking; renames/removals need 
 
 **Synthetic.** `scripts/seed.py` generates a synthetic retail bank (INR, 10 branches across western and southern India) with Faker (seed 42, as-of 2026-11-01):
 10 branches, ~140 employees with salaries, 5,000 customers, ~6,900 accounts, ~99,000 transactions
-over 13 months, ~1,370 loans with realistic overdue/NPA buckets. No real people.
+over 13 months, ~1,370 loans with realistic overdue/NPA buckets. No real people. No row predates what it depends on
+(branch, customer, account); `tests/contract/test_seed_dates.py` checks this.
+
+**Dates are UTC.** "Last month", "Q3" and other relative periods resolve against the as-of date (never the wall clock) with
+month boundaries at UTC midnight, not IST. A real Indian bank would use IST; the difference is small (October deposits at
+Surat: ₹1.080 cr UTC vs ₹1.067 cr IST) but the golden set, the agent's prompt and the eval all use UTC consistently.
 
 ## Run it
 
@@ -205,7 +212,7 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Eval harness + CI regression gate (accuracy drop > 2 pts fails; skips when CI has no model key)
 - [x] Attack before/after, model comparison, ontology with vs without, router comparison (rules vs small LLM)
 - [x] Ontology as single source: generated grants/RLS, validator allowlists, DB-agreement test
-- [ ] Human review of the 150 golden items (numbers above are an upper bound until then)
+- [x] Human review of the 150 golden items (4 references and 2 seed bugs fixed)
 - [x] Jev router comparison (stage 3), Langfuse tracing
 - [x] Docker image build verified
 - [ ] Demo video, v1.0.0 tag
