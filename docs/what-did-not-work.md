@@ -32,3 +32,17 @@ Running log. Becomes the README's "What did not work" section.
   golden set, so it memorised it. The same applies to the input guard's patterns: on 10 attacks written afterwards
   it caught 2. Lesson: any rule tuned on the scoring set needs a held-out set before its number means anything
   (`evals/heldout/router.yaml`). The small-LLM router held at 95% on unseen questions.
+
+- **2026-11-18 · Langfuse returned 401 although the keys were valid.** The project lives in the US region and the code
+  defaulted to the EU host. A key pair is only valid on the region that created it, so every region must be tried
+  (`GET /api/public/projects` with basic auth) before blaming the keys. `.env.example` now says `LANGFUSE_HOST` must match.
+- **2026-11-18 · "Jev" on OpenRouter was not the decision model.** `typesafe/jev-router` is an auto-router that forwards the
+  request to another model (a probe was served by `openai/gpt-6-luna`). The typed Choice/Noul/Score model is
+  `typesafe/jev-1.13` on `POST /api/alpha/decisions`. Benchmarking the router id would have scored a different model under
+  Jev's name.
+- **2026-11-18 · Jev lost the router comparison: 85.0% held-out vs 95.0% for the small LLM, 82.7% vs 97.3% on the golden set.**
+  It sent 23 of 150 answerable questions back as "ambiguous" (over-asking, which users feel as false blocks). It is about
+  40% faster and 3.5x cheaper, so it stays a documented alternative, not the default. One run each.
+- **2026-11-18 · The Claude Code Langfuse plugin was sending every chat session to the app's Langfuse project.** Session
+  traces (messages, tool inputs) mixed with app traces. Plugin config removed and the 8 session traces deleted; use a separate
+  Langfuse project if session tracing is wanted again. App traces never include result rows.
