@@ -221,8 +221,9 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Ontology as single source: generated grants/RLS, validator allowlists, DB-agreement test
 - [x] Human review of the 150 golden items (4 references and 2 seed bugs fixed)
 - [x] Jev router comparison (stage 3), Langfuse tracing
-- [x] Docker image build verified
-- [ ] Demo video, v1.0.0 tag
+- [x] Docker image build verified (`/healthz` reports 1.0.0)
+- [x] v1.0.0 tag
+- [ ] Demo video
 
 ## What did not work
 
