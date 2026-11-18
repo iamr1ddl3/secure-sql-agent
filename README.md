@@ -24,7 +24,7 @@ Claude Sonnet 5.5, router Claude Haiku 5.5, both via OpenRouter. Raw reports: [`
 | p50 / p95 latency | **3.1 s / 5.2 s** (two model calls per question) |
 | Cost per 1,000 queries | Sonnet 5.5 **$2.46** (97.9%) · Haiku 5.5 **$0.23** (96.8%) · gpt-5-mini $0.91 (88.3%, p95 16 s) · qwen3-coder $0.23 (75.5%, 6.7% false blocks) |
 | Ontology gain (stage 2) | **+3.2 points** (Sonnet) and **+1.1** (Haiku), within run-to-run noise; +14% to +32% prompt cost |
-| Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev: not yet run |
+| Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev (`typesafe/jev-1.13`) **85.0%** (0.8 s, $0.023 per 1,000 decisions); Jev loses, so the small LLM stays the default |
 
 How to read these honestly:
 
@@ -111,7 +111,7 @@ flowchart LR
     DB --> PT[Permission + attack tests]
     PT --> L{0 leaked rows?}
     L -- no --> BLK([Merge blocked])
-    L -- yes --> EV["Accuracy eval (next)"]
+    L -- yes --> EV["Accuracy eval on the golden set<br/>(skipped in CI until a model key is added)"]
     EV --> D{Drop ≤ 2 points?}
     D -- no --> BLK
     D -- yes --> OK([Merge allowed])
@@ -177,16 +177,36 @@ python -m secure_sql_agent.mcp_server            # MCP (stdio)
 
 CI runs the same migrations against an ephemeral Postgres 16 on every PR and fails on any leaked row.
 
+### Reproduce the results
+
+```bash
+python evals/golden/verify.py                 # check every reference answer two ways; writes reports/golden_review.md
+python evals/run_eval.py                      # golden set end to end (needs OPENROUTER_API_KEY; else a stub pipeline)
+python evals/run_eval.py --guards-off         # ablation: input guard, scope guard and router disabled
+python evals/run_eval.py --semantic           # ontology semantic mode (synonyms, joins, terms)
+python evals/run_router_eval.py --heldout     # router on the 40 unseen questions
+python evals/gate.py                          # the CI accuracy gate against evals/baseline.json
+python scripts/gen_from_ontology.py --check   # fails if generated grants/RLS drift from ontology/bank.yaml
+```
+
+Single runs vary by about 1 to 2 points; treat smaller differences as ties.
+
 ## Status
 
 - [x] Interface frozen (JSON Schema + examples + contract tests)
 - [x] Schema, roles, column grants, RLS, analytics views, identity binding
-- [x] Synthetic data generator
+- [x] Synthetic data generator (plus 5 planted prompt-injection values)
 - [x] Permission + attack test suite, CI leak gate
-- [ ] Golden set (~150, human-checked)
-- [ ] Pipeline: input guard → router → schema linking → generation → validator → output guard
-- [ ] Eval harness + CI regression gate (accuracy drop > 2 pts fails)
-- [ ] Demo video
+- [x] Golden set: 150 items drafted and machine-verified (owner-run truth cross-checked as the asking user)
+- [x] Pipeline: input guard, router, schema context, LangGraph generation (1 repair), validator, output guard
+- [x] Scope guard (clear refusal for another branch) and human approval queue (`needs_review`)
+- [x] Eval harness + CI regression gate (accuracy drop > 2 pts fails; skips when CI has no model key)
+- [x] Attack before/after, model comparison, ontology with vs without, router comparison (rules vs small LLM)
+- [x] Ontology as single source: generated grants/RLS, validator allowlists, DB-agreement test
+- [ ] Human review of the 150 golden items (numbers above are an upper bound until then)
+- [x] Jev router comparison (stage 3), Langfuse tracing
+- [x] Docker image build verified
+- [ ] Demo video, v1.0.0 tag
 
 ## What did not work
 

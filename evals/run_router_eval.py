@@ -27,7 +27,7 @@ from verify import load_items  # noqa: E402
 
 from secure_sql_agent.llm import LLM, LLMError, load_model_ids  # noqa: E402
 from secure_sql_agent.pipeline import Usage  # noqa: E402
-from secure_sql_agent.routers import LLMRouter, RulesRouter  # noqa: E402
+from secure_sql_agent.routers import JevRouter, LLMRouter, RulesRouter  # noqa: E402
 
 ROLE = {k: role for k, role, *_ in DEMO_STAFF}
 
@@ -79,7 +79,7 @@ def main() -> int:
     if os.environ.get("OPENROUTER_API_KEY"):
         cfg = load_model_ids(str(ROOT / "config/models.yaml"))
         routers["small_llm"] = LLMRouter(LLM(cfg["models"]["cheap"]["id"], os.environ["OPENROUTER_API_KEY"]))
-    # ponytail: Jev goes here once access exists (task 15): routers["jev"] = JevRouter(...) with the same .route() signature.
+        routers["jev"] = JevRouter(os.environ["OPENROUTER_API_KEY"])
     results = [evaluate(n, r, items) for n, r in routers.items()]
     (ROOT / "reports").mkdir(exist_ok=True)
     (ROOT / "reports" / ("router_eval_heldout.json" if heldout else "router_eval.json")).write_text(json.dumps(results, indent=2))
