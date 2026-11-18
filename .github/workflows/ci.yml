@@ -49,6 +49,9 @@ jobs:
           PY
 
       - name: Eval on the golden set
+        # only this step sees the key; fork PRs get no secrets, so there the stub runs and the gate skips
+        env: { OPENROUTER_API_KEY: "${{ secrets.OPENROUTER_API_KEY }}" }
+        timeout-minutes: 20
         run: python evals/run_eval.py
 
       - name: Gate - execution accuracy must not drop more than 2 points vs evals/baseline.json
@@ -58,5 +61,5 @@ jobs:
         if: always()
         with: { name: reports, path: reports/ }
 
-  # ponytail: the eval runs in this job. Once the pipeline calls OpenRouter, move it to its own job with the
-  # OPENROUTER_API_KEY secret and a cost cap (every PR spends tokens).
+  # ponytail: the live eval runs in this job, ~$0.035 and ~10 min per push/PR (150 items). Move it to its own job
+  # (or a label-triggered one) if that cost or wait starts to matter.
