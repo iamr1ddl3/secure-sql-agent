@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Secure SQL Agent: try to break it</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#0d1b2a; --panel:#13263a; --line:#24405c; --amber:#fca311; --text:#e8edf2; --muted:#8fa3b8;
+          --ok:#4cc38a; --bad:#ef5b5b; --warn:#fca311; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--navy); color:var(--text); font:15px/1.5 Montserrat, system-ui, sans-serif; }
+  main { max-width:1200px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-weight:800; font-size:28px; margin:0; } h1 b { color:var(--amber); }
+  h2 { font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin:26px 0 10px; }
+  .sub { color:var(--muted); margin:6px 0 0; }
+  code, pre, .mono { font-family:"IBM Plex Mono", monospace; }
+  button { font:inherit; cursor:pointer; border:1px solid var(--line); background:var(--panel); color:var(--text);
+           border-radius:8px; padding:7px 12px; }
+  button:hover { border-color:var(--amber); }
+  button.on { background:var(--amber); color:var(--navy); border-color:var(--amber); font-weight:600; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .chip { font-size:13px; text-align:left; }
+  .chip.attack { border-color:#5c2a2a; }
+  .chip.attack::before { content:"⚠ "; color:var(--bad); }
+  textarea { width:100%; min-height:62px; resize:vertical; background:var(--panel); color:var(--text); border:1px solid var(--line);
+             border-radius:8px; padding:10px; font:inherit; }
+  select { font:inherit; background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(420px, 1fr)); gap:16px; margin-top:16px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; overflow:hidden; }
+  .who { font-weight:800; } .who small { color:var(--muted); font-weight:400; }
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 9px; border-radius:99px; margin-left:8px; }
+  .answered { background:#173d2c; color:var(--ok); } .refused, .denied, .error { background:#3d1717; color:var(--bad); }
+  .needs_clarification, .needs_review { background:#3d2e10; color:var(--warn); } .ok { background:#173d2c; color:var(--ok); }
+  .expl { margin:10px 0; }
+  pre { background:#0a1622; border:1px solid var(--line); border-radius:8px; padding:10px; white-space:pre-wrap; font-size:12.5px; margin:8px 0; }
+  .trace { list-style:none; padding:0; margin:10px 0; font-size:13px; }
+  .trace li { display:flex; gap:8px; padding:3px 0; border-left:2px solid var(--line); padding-left:10px; }
+  .trace li.hit { border-left-color:var(--amber); }
+  .trace .stage { width:100px; color:var(--muted); flex:none; }
+  .trace .act { font-weight:600; color:var(--amber); }
+  .tbl { overflow:auto; max-height:320px; }
+  table { border-collapse:collapse; font-size:12.5px; width:100%; }
+  th, td { border-bottom:1px solid var(--line); padding:4px 8px; text-align:left; white-space:nowrap; }
+  th { color:var(--amber); font-family:"IBM Plex Mono", monospace; font-weight:600; position:sticky; top:0; background:var(--panel); }
+  .muted { color:var(--muted); font-size:13px; }
+  .note { color:var(--muted); font-size:13px; margin-top:8px; }
+  footer { margin-top:40px; color:var(--muted); font-size:13px; } a { color:var(--amber); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Secure SQL Agent: <b>try to break it</b></h1>
+  <p class="sub">A text-to-SQL agent over synthetic bank data. Every query runs as the person asking, so Postgres
+    (roles, column grants, row level security) decides what comes back. Not the model.</p>
+
+  <h2>Mode</h2>
+  <div class="row" id="modes">
+    <button data-mode="replay" class="on">Replay: real answers, precomputed</button>
+    <button data-mode="live">Live: calls the real pipeline</button>
+  </div>
+  <div class="note" id="modeNote"></div>
+
+  <h2>1. Pick who you are</h2>
+  <div class="row" id="roles"></div>
+
+  <h2>2. Ask something (or try to break it)</h2>
+  <div class="row" id="prompts"></div>
+  <p></p>
+  <textarea id="q" maxlength="300" placeholder="Ask a question about the bank's data..."></textarea>
+  <div class="row" style="margin-top:8px">
+    <button id="ask" class="on">Ask</button>
+    <span class="muted">then</span>
+    <select id="other"></select>
+    <button id="askOther">Ask as another role</button>
+    <span class="muted" id="busy"></span>
+  </div>
+  <div class="grid" id="answers"></div>
+
+  <h2>3. Skip the AI entirely</h2>
+  <p class="muted">Run a fixed, reviewed SQL statement straight against Postgres as the chosen role: no model, no SQL
+    validator. Even a fully fooled model can't see more than this. (Visitors can't send their own SQL.)</p>
+  <div class="row" id="raws"></div>
+  <div class="grid" id="rawOut"></div>
+
+  <footer>Synthetic data only; the 7 identities are demo staff accounts. Source, eval numbers and design notes:
+    <a href="https://github.com/iamr1ddl3/secure-sql-agent">github.com/iamr1ddl3/secure-sql-agent</a></footer>
+</main>
+<script>
+const USERS = {"teller.surat":"Teller, Surat", "teller.mumbai":"Teller, Mumbai", "manager.surat":"Branch manager, Surat",
+  "manager.mumbai":"Branch manager, Mumbai", "hr.officer":"HR officer", "auditor":"Internal auditor", "intern":"Data intern"};
+const RAWS = {salaries:"Read every salary", national_ids:"Read customers' national IDs",
+  txns_by_branch:"Count transactions in every branch", staff_users:"Read the staff → role mapping"};
+const STAGES = ["identity", "input_guard", "router", "validator", "database", "output_guard"];
+const ATTACK = /ignore|drop table|you are now/i;
+let mode = "replay", user = "teller.surat", replays = null, lastQ = null;
+const $ = id => document.getElementById(id);
+
+function el(tag, attrs = {}, ...kids) {  // builds DOM with textContent only: no untrusted HTML ever reaches innerHTML
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "class" ? e.className = v : e.setAttribute(k, v);
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+function renderRoles() {
+  $("roles").replaceChildren(...Object.entries(USERS).map(([k, label]) => {
+    const b = el("button", {class: k === user ? "on" : ""}, label);
+    b.onclick = () => { user = k; renderRoles(); };
+    return b;
+  }));
+  $("other").replaceChildren(...Object.entries(USERS).filter(([k]) => k !== user).map(([k, l]) => el("option", {value: k}, l)));
+}
+
+function table(cols, rows) {
+  if (!rows || !rows.length) return el("div", {class: "muted"}, "No rows.");
+  return el("div", {class: "tbl"}, el("table", {}, el("tr", {}, ...cols.map(c => el("th", {}, c))),
+    ...rows.map(r => el("tr", {}, ...r.map(v => el("td", {}, v == null ? "" : String(v)))))));
+}
+
+function answerCard(u, q, r) {
+  const hits = r.policy_hits || [];
+  const trace = el("ul", {class: "trace"}, ...STAGES.map(s => {
+    const h = hits.filter(x => x.stage === s);
+    return el("li", {class: h.length ? "hit" : ""}, el("span", {class: "stage"}, s),
+      h.length ? el("span", {}, ...h.map(x => el("div", {}, el("span", {class: "act"}, x.action + " "),
+        el("code", {}, x.policy_id), x.detail ? el("span", {class: "muted"}, " " + x.detail) : null)))
+        : el("span", {class: "muted"}, "pass"));
+  }));
+  return el("div", {class: "card"},
+    el("div", {}, el("span", {class: "who"}, USERS[u] + " ", el("small", {}, u)), el("span", {class: "pill " + r.status}, r.status)),
+    el("div", {class: "muted", style: "margin-top:4px"}, "“" + q + "”"),
+    el("div", {class: "expl"}, r.explanation || ""),
+    r.sql ? el("pre", {}, r.sql) : null,
+    r.columns && r.columns.length ? table(r.columns.map(c => c.name + (c.masked ? " (masked)" : "")), r.rows) : null,
+    r.truncated ? el("div", {class: "muted"}, "Truncated.") : null,
+    el("div", {class: "muted", style: "margin-top:10px"}, "Step trace (which guard acted)"), trace);
+}
+
+function errorCard(u, msg) {
+  return el("div", {class: "card"}, el("span", {class: "who"}, USERS[u]), el("span", {class: "pill error"}, "error"),
+    el("div", {class: "expl"}, msg));
+}
+
+async function post(path, body) {
+  const res = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : `HTTP ${res.status}`);
+  return data;
+}
+
+async function ask(u, q) {
+  if (mode === "replay") {
+    const a = replays.answers[q];
+    if (!a) return errorCard(u, "Replay mode only has the suggested questions. Switch to Live to ask your own.");
+    return answerCard(u, q, a[u]);
+  }
+  try { return answerCard(u, q, await post("/playground/ask", {as_user: u, question: q})); }
+  catch (e) { return errorCard(u, e.message); }
+}
+
+async function busy(fn) {
+  document.querySelectorAll("button").forEach(b => b.disabled = true); $("busy").textContent = mode === "live" ? "thinking…" : "";
+  try { await fn(); } finally { document.querySelectorAll("button").forEach(b => b.disabled = false); $("busy").textContent = ""; }
+}
+
+$("ask").onclick = () => {
+  const q = $("q").value.trim(); if (!q) return;
+  busy(async () => { lastQ = {q, u: user}; $("answers").replaceChildren(await ask(user, q)); });
+};
+$("askOther").onclick = () => {
+  const q = $("q").value.trim(); if (!q) return;
+  const second = $("other").value;
+  busy(async () => {
+    const first = lastQ && lastQ.q === q && lastQ.u === user ? $("answers").firstChild : await ask(user, q);
+    $("answers").replaceChildren(first, await ask(second, q)); lastQ = {q, u: user};
+  });
+};
+
+async function runRaw(sid) {
+  busy(async () => {
+    let r;
+    if (mode === "replay") r = replays.raw[sid][user];
+    else try { r = await post("/playground/raw", {as_user: user, statement_id: sid}); }
+         catch (e) { $("rawOut").replaceChildren(errorCard(user, e.message)); return; }
+    $("rawOut").replaceChildren(el("div", {class: "card"},
+      el("span", {class: "who"}, USERS[user] + " ", el("small", {}, "→ Postgres directly")),
+      el("span", {class: "pill " + r.status}, r.status === "denied" ? "permission denied" : "rows returned"),
+      el("pre", {}, r.sql),
+      r.status === "denied" ? el("pre", {style: "color:var(--bad)"}, "ERROR: " + r.error) : table(r.columns, r.rows),
+      r.status === "ok" && sid === "txns_by_branch" && r.rows.length === 1
+        ? el("div", {class: "note"}, "No WHERE clause, yet one branch: row level security filtered the rest.") : null));
+  });
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll("#modes button").forEach(b => b.classList.toggle("on", b.dataset.mode === m));
+  $("modeNote").textContent = m === "replay"
+    ? `Real pipeline output for the suggested questions, recorded ${replays ? replays.generated_on : ""}. Free and always on.`
+    : "Each question runs the real pipeline (an LLM call + Postgres). Limit: 10 per minute, 100 per day. Max 300 characters.";
+  $("q").readOnly = m === "replay";
+  $("q").placeholder = m === "replay" ? "Pick a suggested question above (switch to Live to type your own)" : "Ask a question about the bank's data...";
+}
+document.querySelectorAll("#modes button").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+$("raws").replaceChildren(...Object.entries(RAWS).map(([sid, label]) => {
+  const b = el("button", {}, label); b.onclick = () => runRaw(sid); return b;
+}));
+
+fetch("/playground/replays").then(r => r.json()).then(data => {
+  replays = data;
+  $("prompts").replaceChildren(...data.questions.map(q => {
+    const b = el("button", {class: "chip" + (ATTACK.test(q) ? " attack" : "")}, q);
+    b.onclick = () => { $("q").value = q; $("ask").click(); };
+    return b;
+  }));
+  setMode("replay");
+});
+renderRoles();
+</script>
+</body>
+</html>

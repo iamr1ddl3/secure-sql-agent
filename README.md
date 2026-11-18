@@ -18,6 +18,21 @@ SQL and different totals, refusals and an ask-back, and raw SQL run as the telle
 (`permission denied for table salaries`). The video is code too: [`demo/`](demo/) is a HyperFrames composition with
 Kokoro TTS narration (`npx hyperframes render` rebuilds it).
 
+### Try it
+
+**Playground: _link coming once deployed_** (Hugging Face Spaces). One page at `/playground`: pick one of the 7 demo
+identities, ask a question (or try an attack from the suggestions), then click **Ask as another role** to see the
+same question answered side by side. Each answer shows the SQL that ran, the status and a step trace of which guard
+acted. A third panel skips the AI and runs a fixed, reviewed SQL statement as that role straight against Postgres.
+
+- **Replay mode** (default): real pipeline output for 12 curated questions × 7 roles, recorded with
+  `python scripts/build_replays.py`. Free, works without a model key or a live database.
+- **Live mode**: the real pipeline through the same `QueryService` as `POST /v1/query`. 10 calls/min and 100/day per IP,
+  300 characters max; the cost ceiling is the OpenRouter key's own monthly limit.
+- Visitors never hold a token: the server mints one only for the 7 demo users, and never accepts SQL from visitors.
+
+Locally: `uvicorn secure_sql_agent.api:app` and open <http://localhost:8000/playground>.
+
 ## Results
 
 Golden set: 150 questions in 7 groups, run end to end against hosted Supabase as the 7 demo identities. SQL model
@@ -233,6 +248,7 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Docker image build verified (`/healthz` reports 1.0.0)
 - [x] v1.0.0 tag
 - [x] Demo video ([`docs/demo/`](docs/demo/), source in [`demo/`](demo/))
+- [x] Interactive playground (`/playground`, replay + live); deploy pending
 
 ## What did not work
 

@@ -4,18 +4,25 @@ from __future__ import annotations
 from functools import lru_cache
 
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from . import __version__
+from . import __version__, playground
 from .contracts import QueryRequest, QueryResponse
 from .service import QueryService, build_service
 
 app = FastAPI(title="Secure SQL Agent", version=__version__)
+app.include_router(playground.router)
 
 
 @lru_cache
 def _service() -> QueryService:
     return build_service()
+
+
+@app.get("/", include_in_schema=False)
+def root() -> RedirectResponse:
+    return RedirectResponse("/playground")  # a Space opens at /
 
 
 @app.get("/healthz")

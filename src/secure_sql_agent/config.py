@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_jwt_secret: str | None = None  # legacy HS256 projects only
 
+    # Playground only: mints tokens for the 7 demo users (password grant). Never an admin key.
+    supabase_publishable_key: str | None = None
+    demo_user_password: str | None = None
+
     # Models (all via OpenRouter, so cost per query is comparable across vendors)
     openrouter_api_key: str | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
