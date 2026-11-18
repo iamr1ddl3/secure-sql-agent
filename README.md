@@ -41,7 +41,8 @@ How to read these honestly:
   The 3 permission-boundary misses: pb-22 and pb-26 passed 3 of 3 on replay (noise); pb-24 fails 3 of 3 (the agent averages
   staff who have left for the Surat manager, not for HR), left open on purpose.
 - One run per configuration; differences under about 2 points are noise.
-- These come from local runs (CI has no model key yet, so its eval step is skipped). Reproduce with
+- CI also runs the golden-set eval live on every push (OpenRouter key as a repository secret, about $0.035 and 7 minutes;
+  first live run on `050e955`: 97.9% execution accuracy). Comparison rows come from local runs. Reproduce with
   `python evals/run_eval.py`, `--guards-off`, `--semantic`, and `python evals/run_router_eval.py [--heldout]`.
 
 ## How access is enforced
@@ -118,7 +119,7 @@ flowchart LR
     DB --> PT[Permission + attack tests]
     PT --> L{0 leaked rows?}
     L -- no --> BLK([Merge blocked])
-    L -- yes --> EV["Accuracy eval on the golden set<br/>(skipped in CI until a model key is added)"]
+    L -- yes --> EV["Accuracy eval on the golden set<br/>(live in CI; must not drop more than 2 points)"]
     EV --> D{Drop ≤ 2 points?}
     D -- no --> BLK
     D -- yes --> OK([Merge allowed])
@@ -189,7 +190,8 @@ uvicorn secure_sql_agent.api:app --reload        # HTTP
 python -m secure_sql_agent.mcp_server            # MCP (stdio)
 ```
 
-CI runs the same migrations against an ephemeral Postgres 16 on every PR and fails on any leaked row.
+CI runs the same migrations against an ephemeral Postgres 16 on every PR and fails on any leaked row, or on an
+accuracy drop of more than 2 points against `evals/baseline.json`.
 
 ### Reproduce the results
 
@@ -214,7 +216,7 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Golden set: 150 items drafted and machine-verified (owner-run truth cross-checked as the asking user)
 - [x] Pipeline: input guard, router, schema context, LangGraph generation (1 repair), validator, output guard
 - [x] Scope guard (clear refusal for another branch) and human approval queue (`needs_review`)
-- [x] Eval harness + CI regression gate (accuracy drop > 2 pts fails; skips when CI has no model key)
+- [x] Eval harness + CI regression gate (accuracy drop > 2 pts fails; runs live in CI)
 - [x] Attack before/after, model comparison, ontology with vs without, router comparison (rules vs small LLM)
 - [x] Ontology as single source: generated grants/RLS, validator allowlists, DB-agreement test
 - [x] Human review of the 150 golden items (4 references and 2 seed bugs fixed)
