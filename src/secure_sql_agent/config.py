@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     models_file: str = "config/models.yaml"
-    default_model: str = "primary"
+    default_model: str = "cheap"   # Haiku 5.5: within ~1 point of Sonnet at a tenth of the cost (see README)
 
     # Observability
     langfuse_public_key: str | None = None
