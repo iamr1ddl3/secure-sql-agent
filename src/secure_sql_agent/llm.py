@@ -9,6 +9,8 @@ from pathlib import Path
 import yaml
 from openai import OpenAI
 
+from . import tracing
+
 
 class LLMError(Exception):
     pass
@@ -33,12 +35,25 @@ class LLM:
         self.model_id, self.temperature, self.max_tokens = model_id, temperature, max_tokens
         self._client = OpenAI(api_key=api_key, base_url=base_url, timeout=60, max_retries=2)
 
-    def complete(self, system: str, user: str, max_tokens: int | None = None) -> Completion:
+    def complete(self, system: str, user: str, max_tokens: int | None = None, name: str = "llm-call") -> Completion:
+        messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+        with tracing.observation(name, "generation", model=self.model_id, input=messages,
+                                 model_parameters={"temperature": self.temperature, "max_tokens": max_tokens or self.max_tokens}) as gen:
+            try:
+                c = self._complete(messages, max_tokens)
+            except LLMError as e:
+                gen.update(level="ERROR", status_message=str(e))
+                raise
+            gen.update(output=c.text, usage_details={"input": c.prompt_tokens, "output": c.completion_tokens},
+                       cost_details={"total": c.cost_usd})
+            return c
+
+    def _complete(self, messages: list[dict], max_tokens: int | None) -> Completion:
         t0 = time.perf_counter()
         try:
             r = self._client.chat.completions.create(
                 model=self.model_id, temperature=self.temperature, max_tokens=max_tokens or self.max_tokens,
-                messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+                messages=messages,
                 extra_body={"usage": {"include": True}},  # OpenRouter returns the dollar cost
             )
         except Exception as e:  # noqa: BLE001

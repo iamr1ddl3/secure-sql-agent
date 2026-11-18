@@ -19,6 +19,8 @@ from pathlib import Path
 
 import jwt
 
+os.environ.setdefault("LANGFUSE_TRACING_ENVIRONMENT", "eval")  # keep eval traces apart from real traffic (read when tracing starts)
+
 sys.path.insert(0, str(Path(__file__).parent / "golden"))
 from score import score, summarize  # noqa: E402
 from verify import KEY_ID, ROOT, connections, load_items, reference_rows  # noqa: E402

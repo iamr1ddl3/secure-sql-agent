@@ -112,6 +112,9 @@ def build_pipeline(conn_factory=None, owns_conn: bool = True, key_id: str | None
     from .routers import LLMRouter
 
     s = get_settings()
+    from . import tracing
+
+    tracing.init(s)  # no-op unless LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY are set
     cfg = load_model_ids(s.models_file)
     d = cfg.get("defaults", {})
     mk = lambda name: LLM(cfg["models"][name]["id"], s.openrouter_api_key, s.openrouter_base_url,  # noqa: E731

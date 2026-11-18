@@ -9,7 +9,7 @@ class FakeLLM:
     def __init__(self, text):
         self.text = text
 
-    def complete(self, system, user, max_tokens=None):
+    def complete(self, system, user, max_tokens=None, name="llm-call"):
         return SimpleNamespace(text=self.text, cost_usd=0.001, prompt_tokens=10, completion_tokens=5, latency_ms=1)
 
 

@@ -16,7 +16,7 @@ from typing import Callable, TypedDict
 import psycopg
 from langgraph.graph import END, StateGraph
 
-from . import db, input_guard, output_guard
+from . import db, input_guard, output_guard, tracing
 from .review import ReviewStore, needs_review
 from .scope_guard import other_branch_named
 from .contracts import ErrorInfo, PolicyHit, QueryResponse
@@ -109,7 +109,7 @@ class Pipeline:
         user = s["question"]
         if s.get("error"):
             user = f"{s['question']}\n\nYour previous query failed.\nQuery: {s['sql']}\nError: {s['error']}\nWrite a corrected query."
-        c = self.sql_llm.complete(SQL_SYSTEM.format(schema=schema_for(s["role"], self.semantic), as_of=self.as_of), user)
+        c = self.sql_llm.complete(SQL_SYSTEM.format(schema=schema_for(s["role"], self.semantic), as_of=self.as_of), user, name="generate-sql")
         s["usage"].add(c)
         m = re.search(r"```(?:sql)?\s*(.*?)```", c.text, re.DOTALL)
         if not m:  # prose instead of SQL: the model declined (usually because the role has no data for this)
@@ -120,11 +120,15 @@ class Pipeline:
         return {"sql": sql, "attempt": s.get("attempt", 0) + 1, "error": None, "error_kind": None}
 
     def _validate(self, s: State) -> dict:
-        try:
-            return {"validated": validate(s["sql"], s["role"]).sql}
-        except ValidationError as e:
-            return {"error": e.detail, "error_kind": e.policy_id,
-                    "hits": s.get("hits", []) + [PolicyHit(policy_id=e.policy_id, stage="validator", action="block", detail=e.detail[:500])]}
+        with tracing.observation("validate-sql", "guardrail", input={"sql": s["sql"], "role": s["role"]}) as sp:
+            try:
+                ok = validate(s["sql"], s["role"]).sql
+                sp.update(output={"allowed": True})
+                return {"validated": ok}
+            except ValidationError as e:
+                sp.update(output={"allowed": False, "policy_id": e.policy_id, "detail": e.detail[:300]})
+                return {"error": e.detail, "error_kind": e.policy_id,
+                        "hits": s.get("hits", []) + [PolicyHit(policy_id=e.policy_id, stage="validator", action="block", detail=e.detail[:500])]}
 
     def _after_validate(self, s: State) -> str:
         if not s.get("error"):
@@ -132,6 +136,12 @@ class Pipeline:
         return "generate" if s["attempt"] < 2 and s["error_kind"] not in NO_REPAIR | UNREPAIRABLE_AS_ERROR else "end"
 
     def _execute(self, s: State) -> dict:
+        with tracing.observation("execute-sql", "tool", input={"sql": s["validated"]}) as sp:  # output: counts only, never rows
+            out = self._execute_sql(s)
+            sp.update(output={"row_count": len(out["result"].rows)} if "result" in out else {"error_kind": out.get("error_kind")})
+            return out
+
+    def _execute_sql(self, s: State) -> dict:
         try:
             r = db.run_as_user(s["conn"], s["sub"], s["validated"], key_id=self.key_id, secret=self.secret,
                                row_cap=s["max_rows"], statement_timeout_ms=self.statement_timeout_ms)
@@ -151,11 +161,14 @@ class Pipeline:
     # ---- entry point -----------------------------------------------------------------------------------------
     def run(self, question: str, sub: uuid.UUID, max_rows: int, trace_id: str) -> QueryResponse:
         usage, conn = Usage(), self.conn_factory()
-        try:
-            out = self._run(question, sub, max_rows, trace_id, usage, conn)
-        finally:
-            if self.owns_conn:
-                conn.close()
+        with tracing.request(trace_id, input={"question": question}, user_id=str(sub)) as root:
+            try:
+                out = self._run(question, sub, max_rows, trace_id, usage, conn)
+            finally:
+                if self.owns_conn:
+                    conn.close()
+            root.update(output={"status": out.status, "explanation": out.explanation, "sql": out.sql, "row_count": out.row_count,
+                                "policy_hits": [h.policy_id for h in out.policy_hits]}, metadata={"usage": usage.dump()})
         out.__pydantic_extra__ = {**(out.model_extra or {}), "usage": usage.dump()}
         return out
 
@@ -180,7 +193,9 @@ class Pipeline:
                 return resp("refused", f"You can only see data for your own branch ({mine}); {other[2]} is outside your access.",
                             [PolicyHit(policy_id="scope.other_branch", stage="input_guard", action="block", detail=f"asked about {other[1]}")])
         try:
-            label, message = self.router.route(question, role, usage) if self.guards else ("answerable", "")
+            with tracing.observation("route-question", input={"question": question, "role": role}) as sp:
+                label, message = self.router.route(question, role, usage) if self.guards else ("answerable", "")
+                sp.update(output={"label": label})
         except LLMError as e:
             return resp("error", "The question could not be classified.", error=ErrorInfo(code="generation_failed", message=str(e)[:500]))
         if label != "answerable":
