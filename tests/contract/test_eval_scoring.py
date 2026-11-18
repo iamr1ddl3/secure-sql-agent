@@ -18,6 +18,13 @@ def test_result_match_ignores_row_and_column_order_and_rounding():
     assert score(ANS, res(rows=[("b", 3.0, 2), ("a", 1, 2.5)]), truth)["pass"] is False  # a value differs
 
 
+def test_extra_columns_pass_but_rows_must_match():
+    truth = [("2026-10-01",)]
+    assert score(ANS, res(rows=[("2026-10-01", 110425931.34)]), truth)["pass"]  # "which month" + its total
+    assert not score(ANS, res(rows=[("2026-10-01", 1.0), ("2026-09-01", 2.0)]), truth)["pass"]  # extra row
+    assert not score(ANS, res(rows=[(1,)]), [(1, 2)])["pass"]  # missing column
+
+
 def test_wrong_rows_or_status_fail():
     assert not score(ANS, res(rows=[(1,)]), [(2,)])["pass"]
     assert not score(ANS, res(status="refused"), [(1,)])["pass"]

@@ -64,3 +64,13 @@ Running log. Becomes the README's "What did not work" section.
   reference fix. One run each; ag-23, pb-15 and pb-26 failed in the 94.7% run and passed on replay, so swings of ~2 points
   between runs are normal. Remaining misses: ag-25 (extra column, scorer is strict), am-06 and am-15 (guessed instead of
   asking back), ag-03 (this run only). Pre-review report kept at `docs/results/golden_prereview_haiku.json`.
+- **2026-11-19 · Second pass on the remaining failures: one undefined convention, one strict scorer, two router misses.**
+  ag-03 ("last 7 days") failed 1 run in 3: the prompt defined "last month" but not "last N days", so the model guessed whether
+  today counts. The prompt now defines it. ag-25 returned the right month plus its total and failed only because the scorer wanted
+  exactly the reference columns; the scorer now accepts extra columns (rows must still match exactly). am-06 ("Show recent
+  transactions") and am-15 ("Show me Harish's details") were answered instead of asked back; am-15 returned date of birth and
+  contact details for 6 customers when the teller meant one. The router now asks back for unfiltered lists and first-name-only
+  lookups. All four were found on the scored set; the held-out router set was the check against over-asking (95.0/97.5% before,
+  97.5/97.5% after, no answerable question sent back). Result: execution accuracy 97.9% (unchanged), item pass 97.3% → 98.0%.
+  New in this run: pb-22 and pb-26 (passed 3 of 3 on replay, noise) and pb-24, which fails 3 of 3: for the Surat manager the agent
+  averages staff who have left, for HR it filters to active. Left open rather than tuned.

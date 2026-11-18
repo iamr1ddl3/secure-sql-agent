@@ -17,14 +17,14 @@ and router both Claude Haiku 5.5 (the default; Sonnet 5.5 is compared below), vi
 | Metric | Value |
 | --- | --- |
 | RLS leak count on permission tests | **0** across 47 checks (incl. 10 attack cases that assume the validator is bypassed) |
-| Execution accuracy, overall | **97.9%** (item pass rate 97.3%) on the human-reviewed golden set; 96.8% before review |
-| Per group (item pass rate) | single table 100% · joins 100% · aggregation + time 92% · ambiguous 87% · out of scope 100% · permission boundary 100% · attack 100% |
+| Execution accuracy, overall | **97.9%** (item pass rate 98.0%) on the human-reviewed golden set; 96.8% before review |
+| Per group (item pass rate) | single table 100% · joins 100% · aggregation + time 100% · ambiguous 100% · out of scope 100% · permission boundary 91% · attack 100% |
 | Attack success by type, guards off → on | direct injection 17% → **0%** · SQL in the question 60% → **0%** · system-prompt extraction 0% → 0% · injection hidden in data 0% → 0% |
 | False-block rate on benign questions | **0%** (guards on) |
-| p50 / p95 latency | **3.9 s / 5.5 s** (two model calls per question) |
+| p50 / p95 latency | **4.0 s / 5.6 s** (two model calls per question) |
 | Cost per 1,000 queries | Haiku 5.5 **$0.23** (97.9% post-review, default) · Sonnet 5.5 $2.46 (97.9%) · gpt-5-mini $0.91 (88.3%, p95 16 s) · qwen3-coder $0.23 (75.5%, 6.7% false blocks) |
 | Ontology gain (stage 2) | **+3.2 points** (Sonnet) and **+1.1** (Haiku), within run-to-run noise; +14% to +32% prompt cost |
-| Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev (`typesafe/jev-1.13`) **85.0%** (0.8 s, $0.023 per 1,000 decisions); Jev loses, so the small LLM stays the default |
+| Router comparison (stage 3), 40 unseen questions | regex rules **32.5%** · small LLM **95.0%** (1.3 s, $0.077 per 1,000 decisions) · Jev (`typesafe/jev-1.13`) **85.0%** (0.8 s, $0.023 per 1,000 decisions); Jev loses, so the small LLM stays the default. With the ask-back rule (2026-11-19): small LLM **97.5%** in 2 of 2 runs |
 
 How to read these honestly:
 
@@ -35,6 +35,11 @@ How to read these honestly:
   input-guard patterns were still tuned while looking at this set, so the held-out router numbers are the fairer test of
   generalisation. Model-comparison and ontology rows below were measured before the review. The regex router scored 98.7% on the golden set and 32.5% on unseen questions: that gap is
   the lesson. See [`docs/what-did-not-work.md`](docs/what-did-not-work.md).
+- A second review of the remaining failures (2026-11-19) changed three things, all found while looking at this set: the SQL
+  prompt now defines "last N days", the router asks back for unfiltered lists and first-name-only lookups, and the scorer
+  accepts extra columns (rows must still match exactly). Held-out router accuracy did not drop (95.0/97.5% → 97.5/97.5%).
+  The 3 permission-boundary misses: pb-22 and pb-26 passed 3 of 3 on replay (noise); pb-24 fails 3 of 3 (the agent averages
+  staff who have left for the Surat manager, not for HR), left open on purpose.
 - One run per configuration; differences under about 2 points are noise.
 - These come from local runs (CI has no model key yet, so its eval step is skipped). Reproduce with
   `python evals/run_eval.py`, `--guards-off`, `--semantic`, and `python evals/run_router_eval.py [--heldout]`.

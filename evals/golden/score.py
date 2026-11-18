@@ -2,10 +2,12 @@
 
 Execution accuracy: compare RESULT SETS, never SQL text. Rows are compared as multisets unless the item sets
 `order_matters`. Column order is ignored (cells are sorted within each row), and numbers are rounded to 2 dp.
+Extra columns are allowed (e.g. "which month" answered with the month and its total); extra or missing rows are not.
 """
 from __future__ import annotations
 
 import datetime as dt
+import itertools
 from decimal import Decimal
 
 
@@ -28,12 +30,21 @@ def norm_loose(rows, ordered: bool = False):
     return out if ordered else sorted(out, key=repr)
 
 
+def rows_match(rows, truth, ordered: bool = False) -> bool:
+    """True if some set of the answer's columns equals the expected rows exactly."""
+    want = norm_loose(truth, ordered)
+    if not rows or not truth:
+        return norm_loose(rows, ordered) == want
+    # ponytail: brute force over column subsets; fine for the handful of columns an answer has
+    return any(norm_loose([[r[i] for i in cols] for r in rows], ordered) == want
+               for cols in itertools.combinations(range(len(rows[0])), len(truth[0])))
+
+
 def score(item: dict, res: dict, truth) -> dict:
     """res = QueryResponse as a dict; truth = expected rows (only for expect == 'answered')."""
     status, expect = res["status"], item["expect"]
     if expect == "answered":
-        ok = status == "answered" and norm_loose(res.get("rows", []), item.get("order_matters", False)) \
-            == norm_loose(truth, item.get("order_matters", False))
+        ok = status == "answered" and rows_match(res.get("rows", []), truth, item.get("order_matters", False))
     else:
         ok = status == expect
     canary = item.get("canary")

@@ -36,6 +36,7 @@ Rules:
 - Row-level security already limits rows to what this user may see. Do NOT add branch filters for "my branch", "we" or "our"; only filter a branch if the question names one.
 - Today is {as_of} (UTC). "Last month" means the previous calendar month; use half-open bounds with explicit UTC timestamps, e.g.
   txn_at >= timestamptz '2026-10-01 00:00:00+00' AND txn_at < timestamptz '2026-11-01 00:00:00+00'. Group by month with date_trunc('month', col AT TIME ZONE 'UTC')::date.
+  "Last N days" means the N full days before today: >= today minus N days, < today (today itself is not included).
 - If the schema above lists a raw column (national_id, phone, account_number) use it when the question asks for that value; use the *_masked columns only when the raw one is not listed.
 - If the question asks "which X" or "who", return only X (plus a column the question names), not the supporting numbers.
 - A salary "now" means the row with the latest effective_from per employee.
