@@ -66,5 +66,20 @@ jobs:
         if: always()
         with: { name: reports, path: reports/ }
 
+  container-smoke:
+    # The MCP HTTP transport must be reachable from outside the container (v1.0.1 fix).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -e .
+      - run: docker build -t secure-sql-agent .
+      - run: docker run -d --name mcp -p 8001:8000 secure-sql-agent python -m secure_sql_agent.mcp_server --http
+      - name: List tools over HTTP from outside the container
+        run: |
+          for i in $(seq 1 20); do python scripts/mcp_smoke.py && exit 0; sleep 1; done
+          docker logs mcp; exit 1
+
   # ponytail: the live eval runs in this job, ~$0.035 and ~10 min per push/PR (150 items). Move it to its own job
   # (or a label-triggered one) if that cost or wait starts to matter.

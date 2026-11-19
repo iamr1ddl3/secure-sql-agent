@@ -1,6 +1,6 @@
 [project]
 name = "secure-sql-agent"
-version = "1.0.0"
+version = "1.0.1"
 description = "Security-first text-to-SQL agent over (synthetic) bank data: database-enforced RLS, guardrails, eval-gated CI."
 requires-python = ">=3.11"
 dependencies = [

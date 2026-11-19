@@ -212,6 +212,7 @@ pytest -q
 # 4. service
 uvicorn secure_sql_agent.api:app --reload        # HTTP
 python -m secure_sql_agent.mcp_server            # MCP (stdio)
+MCP_HOST=0.0.0.0 python -m secure_sql_agent.mcp_server --http   # MCP over streamable HTTP on :8000/mcp
 ```
 
 CI runs the same migrations against an ephemeral Postgres 16 on every PR and fails on any leaked row, or on an
@@ -246,7 +247,7 @@ Single runs vary by about 1 to 2 points; treat smaller differences as ties.
 - [x] Human review of the 150 golden items (4 references and 2 seed bugs fixed)
 - [x] Jev router comparison (stage 3), Langfuse tracing
 - [x] Docker image build verified (`/healthz` reports 1.0.0)
-- [x] v1.0.0 tag
+- [x] v1.0.0 tag; v1.0.1: MCP over HTTP reachable from outside the container (CI smoke test)
 - [x] Demo video ([`docs/demo/`](docs/demo/), source in [`demo/`](demo/))
 - [x] Interactive playground (`/playground`, chat; recorded + live answers); deploy pending
 

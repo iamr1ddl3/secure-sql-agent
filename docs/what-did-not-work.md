@@ -26,6 +26,12 @@ Running log. Becomes the README's "What did not work" section.
 - **Caveat on every number so far:** the input-guard patterns and the prompt were tuned while looking at the
   golden set that scores them, and the set is not yet human-reviewed. Treat 98.9% as an upper bound until there
   is a held-out set (task to add) and Ravi has approved the items.
+- **2026-11-19 · MCP over HTTP only worked inside its own container (fixed in v1.0.1).** `--http` used the SDK's
+  default bind, `127.0.0.1`, so in Docker nothing outside the container could connect, and the compose `mcp`
+  service was unusable. No test caught it: contract tests call the service in-process and nothing called the
+  HTTP transport over a network. Found by Project 2, the first real outside caller. Fix: `MCP_HOST` / `MCP_PORT`
+  (the image sets `MCP_HOST=0.0.0.0`) and a CI job that builds the image, starts it and lists the tools over HTTP.
+  Lesson: a transport is not supported until something outside the process has called it.
 - **Open: two "ambiguous" items.** The router answers `Show recent transactions.` (am-06) and
   `Show me Harish's details.` (am-15) instead of asking back. Not tuned on purpose, to avoid overfitting.
 - **2026-11-17 · Regex router: 98.7% on the golden set, 32.5% on unseen questions.** Written while looking at the
