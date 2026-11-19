@@ -4,8 +4,8 @@ Bank staff ask questions in plain English and get answers from the bank's databa
 itself** decides which rows each person may see, so a fooled LLM cannot widen access. Every change
 is gated by evals in CI.
 
-> Part 1 of 2. Part 2 (Secure Multi-Agent Delegation) calls this agent as a specialist and proves the
-> security still holds when an agent is the caller. *(link once the repo exists)*
+> Part 1 of 2. Part 2, [Secure Multi-Agent Delegation](https://github.com/iamr1ddl3/secure-agent-delegation), calls
+> this agent as a specialist over MCP and proves the security still holds when an agent is the caller.
 
 ![A fooled assistant can only open what the asker could open](docs/images/master-key-vs-key-card.png)
 
