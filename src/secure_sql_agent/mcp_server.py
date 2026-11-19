@@ -1,9 +1,11 @@
 """MCP transport: tool `query_bank_data`. Same service, same protection as the HTTP API.
 
 Run: python -m secure_sql_agent.mcp_server   (stdio)   or with --http for streamable HTTP.
+HTTP binds MCP_HOST:MCP_PORT (default 127.0.0.1:8000); the Docker image sets MCP_HOST=0.0.0.0.
 """
 from __future__ import annotations
 
+import os
 import sys
 from functools import lru_cache
 
@@ -36,4 +38,9 @@ def query_bank_data(question: str, identity: str, on_behalf_of_chain: list[Deleg
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http" if "--http" in sys.argv else "stdio")
+    if "--http" in sys.argv:
+        # The SDK binds 127.0.0.1 by default, which is unreachable from outside a container.
+        mcp.run(transport="streamable-http", host=os.environ.get("MCP_HOST", "127.0.0.1"),
+                port=int(os.environ.get("MCP_PORT", "8000")))
+    else:
+        mcp.run(transport="stdio")

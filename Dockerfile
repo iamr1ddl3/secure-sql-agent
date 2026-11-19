@@ -7,6 +7,7 @@ COPY config ./config
 COPY ontology ./ontology
 RUN pip install --no-cache-dir .
 ENV ONTOLOGY_FILE=/app/ontology/bank.yaml
+ENV MCP_HOST=0.0.0.0
 RUN mkdir -p reports && chown 1000 reports   # review queue (SQLite) lives here
 USER 1000
 EXPOSE 8000
